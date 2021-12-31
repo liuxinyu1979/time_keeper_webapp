@@ -1,25 +1,101 @@
 <!doctype html>
 <html>
     <head>
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
-        <!-- Bootstrap CSS --> 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
-
-        <!-- <link rel="stylesheet" href="style.css" /> -->
-        <title>Time Keeper Webapp</title>
+    
+        <title>Collapsible sidebar using Bootstrap 4</title>
+    
+        <!-- Bootstrap CSS CDN -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+        <!-- Our Custom CSS -->
+        <link rel="stylesheet" href="style.css">
+    
+        <!-- Font Awesome JS -->
+        <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+        <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
     </head>
+
     <body>
+        <!-- jQuery CDN - Slim version (=without AJAX) -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <!-- Popper.JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+        <!-- Bootstrap JS -->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
         {% include "nav.html" %}
-        <!-- <div class="main col py-3"> -->
-            <div id="container">{% block content %}{% endblock %}</div>   
-        <!-- </div>             -->
+
+        <!-- https://getbootstrap.com/docs/4.1/layout/grid/ has 12 columns in the grid system -->
+        <div class="container-fluid h-100">
+            <div class="row h-100">
+                <div class="col-2" >
             
-            <!--add padding to the left and right-->
-        <div id="footer">
-            {% block footer %}
-            &copy; Copyright 2021 by Jackie Liu.
-            {% endblock %}
+                    <nav id="sidebar">
+                        <div class="sidebar-header">
+                            <h3>Au4Tech</h3>
+                        </div>
+                
+                        <ul class="list-unstyled components">
+                            <!-- <p>Time Management</p> -->
+                            <br/>
+                            <br/>
+                            <li class="active">
+                                <a href="#TimeManagement" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Time Management</a>
+                                <ul class="collapse list-unstyled" id="TimeManagement">
+                                    <li>
+                                        <a href="#">TM 1</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">TM 2</a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li>
+                                <a href="#graphs" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Graphs</a>
+                                <ul class="collapse list-unstyled" id="graphs">
+                                    <li>
+                                        <a href="#">Admin Graphs</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Time Graphs</a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-10" style="text-align: center;">
+                    <br/>
+                    <br/>
+                    <br/>
+                    <div class="main col py-3">
+                        <div id="content">{% block content %}{% endblock %}</div>   
+                    </div>            
+                    <br/>
+                    
+                    <!--add padding to the left and right-->
+                    <div id="footer">
+                        <div class="row"> 
+                            <div class="col" style="text-align: right;">
+                                <a href="#">Contact</a>
+                            </div>
+                            <div class="col" style="text-align: left;">
+                                <a href="#">About</a>
+                            </div>
+                        </div>
+
+                        <div class="row"> 
+                            <div class="col text-align: center;">
+
+
+                            {% block footer %}
+                            &copy; Copyright 2021 by Jackie Liu.
+                            {% endblock %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
 </html>
