@@ -132,3 +132,86 @@ class TimeKeeperDao:
 
         return is_success, dr, is_success_hit_count, actions, actions_hit_count
 
+
+    def retrieve_for_time_stat(self, start, end):
+
+        # parallel array
+        # date_range->['2021-x-y', '2021-x-y', '2021-x-y']
+        # used->[0, 0, 0]
+        # added->[0,0,0]
+        num_of_days = 14
+        date_range = [(datetime.today()+timedelta(days=-i)).strftime('%Y-%m-%d') for i in range(0, num_of_days)]
+        lookup = {}
+        for i in range(len(date_range)):
+            lookup[date_range[i]] = i
+
+        used = [0 for i in range(0, num_of_days)]
+        added = [0 for i in range(0, num_of_days)]
+
+
+        ampm = ["am", "pm"]
+        am_hrs = 12
+        # hour 1.. 12
+        hrs = [str(i+1) for i in range(am_hrs)]
+        # am is hit_count[0], hit_count[1]
+        hit_count = [[0 for i in range(am_hrs)], [0 for i in range(am_hrs)]]
+
+        hitcount_pl = [
+            {
+                '$match': {
+                    'datetime':{'$lte':datetime.strptime(date_range[0], '%Y-%m-%d'),'$gte':datetime.strptime(date_range[-1], '%Y-%m-%d')}
+                }
+            }, {
+                '$unwind': {
+                    'path': '$minutesUsedTimeStamp', 
+                    'preserveNullAndEmptyArrays': False
+                }
+            }, {
+                '$group': {
+                    '_id': '$minutesUsedTimeStamp.hr', 
+                    'count': {
+                        '$sum': 1
+                    }
+                }
+            }
+        ]
+        for doc in self.time_db_tracker_records.aggregate(pipeline=hitcount_pl):
+            time_stamp_hr = doc['_id']
+            ampm_idx = 0
+            if doc['_id'] > 12:
+                time_stamp_hr -= 12
+                ampm_idx = 1
+            hit_count[ampm_idx][time_stamp_hr-1] = doc['count']
+            
+
+        used_added_minutes_pl = [
+            {
+                '$match': {
+                    'datetime': {
+                        '$lte': datetime.strptime(date_range[0], '%Y-%m-%d'), 
+                        '$gte': datetime.strptime(date_range[-1], '%Y-%m-%d')
+                    }
+                }
+            }, {
+                '$project': {
+                    'date': {
+                        '$dateToString': {
+                            'date': '$datetime', 
+                            'format': '%Y-%m-%d'
+                        }
+                    }, 
+                    'minutesUsedSum': {
+                        '$sum': '$minutesUsed'
+                    }, 
+                    'minutesAddedSum': {
+                        '$sum': '$minutesAdded'
+                    }
+                }
+            }
+        ]
+        for doc in self.time_db_tracker_records.aggregate(pipeline=used_added_minutes_pl):
+            loc = lookup[doc['date']]
+            used[loc] = doc['minutesUsedSum']
+            added[loc] = doc['minutesAddedSum']
+
+        return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count
