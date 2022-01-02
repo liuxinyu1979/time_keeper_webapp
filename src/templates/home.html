@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <img src="{{ admin_action_graph }}" alt="my plot">
-
+<div class="container-fluid">
+    <div class="row-fluid">
+        {% for r in admin_action_graphs  | batch( cols, '&nbsp;') %}
+        <tr>
+        {% for column in r %}
+        <td><img src="{{ column }}" alt="my plot"></td>
+        {% endfor %}
+        </tr>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
-
