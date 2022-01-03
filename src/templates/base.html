@@ -52,10 +52,10 @@
                                 <a href="#graphs" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Graphs</a>
                                 <ul class="collapse list-unstyled" id="graphs">
                                     <li>
-                                        <a href="#">Admin Graphs</a>
+                                        <a href="{{ url_for('show_admin_graphs') }}">Admin Graphs</a>
                                     </li>
                                     <li>
-                                        <a href="#">Time Graphs</a>
+                                        <a href="{{ url_for('show_time_bucket_graphs') }}">Time Graphs</a>
                                     </li>
                                 </ul>
                             </li>

@@ -54,6 +54,22 @@ def retrieve_admin_stats():
     print(ss)
     return ss
 
+# retrieve all time graphs
+@app.route('/retrieve_time_stats', methods=['GET'])
+def retrieve_time_stats():
+    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1)
+    resp = {
+        "date_range": date_range,
+        "used": used,
+        "added": added,
+        "hours":hrs,
+        "am": hit_count[0],
+        "pm": hit_count[1]
+    }
+    ss = jsonify(resp)
+    print(ss)
+    return ss    
+
 @app.route('/show_admin_graphs', methods=['GET'])
 def show_admin_graphs():
     success_flags, date_range, success_flags_hit_count, action_names, actions_hit_count  = time_keeper_dao.retrieve_admin_stat()
@@ -79,21 +95,6 @@ def show_time_bucket_graphs():
     return render_template("graphs.html", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
 
 
-# retrieve all time graphs
-@app.route('/retrieve_time_stats', methods=['GET'])
-def retrieve_time_stats():
-    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1)
-    resp = {
-        "date_range": date_range,
-        "used": used,
-        "added": added,
-        "hours":hrs,
-        "am": hit_count[0],
-        "pm": hit_count[1]
-    }
-    ss = jsonify(resp)
-    print(ss)
-    return ss
 
 
 if __name__ == '__main__':
