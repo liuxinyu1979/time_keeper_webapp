@@ -154,7 +154,7 @@ class TimeKeeperDao:
         # hour 1.. 12
         hrs = [str(i+1) for i in range(am_hrs)]
         # am is hit_count[0], hit_count[1]
-        hit_count = [[0 for i in range(am_hrs)], [0 for i in range(am_hrs)]]
+        hit_count_vals = [[0 for i in range(am_hrs)], [0 for i in range(am_hrs)]]
 
         hitcount_pl = [
             {
@@ -181,7 +181,7 @@ class TimeKeeperDao:
             if doc['_id'] > 12:
                 time_stamp_hr -= 12
                 ampm_idx = 1
-            hit_count[ampm_idx][time_stamp_hr-1] = doc['count']
+            hit_count_vals[ampm_idx][time_stamp_hr-1] = doc['count']
             
 
         used_added_minutes_pl = [
@@ -214,4 +214,4 @@ class TimeKeeperDao:
             used[loc] = doc['minutesUsedSum']
             added[loc] = doc['minutesAddedSum']
 
-        return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count
+        return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count_vals
