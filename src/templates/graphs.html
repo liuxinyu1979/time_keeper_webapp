@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row-fluid mt-md-n5">
+        {% for r in admin_action_graphs  | batch( cols, '&nbsp;') %}
+        <tr>
+        {% for column in r %}
+        <td><img src="{{ column }}" alt="my plot"></td>
+        {% endfor %}
+        </tr>
+        <br/>
+        <br/>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

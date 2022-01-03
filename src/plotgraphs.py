@@ -6,7 +6,7 @@ import numpy as np
 import base64
 from io import BytesIO
 
-def admin_plot_img(date_range, y_axis_lbls, vals_two_dim, plot_title):
+def heatmap_plot_img(date_range, y_axis_lbls, vals_two_dim, plot_title):
     plt.rcParams.update({'font.size': 10})
     plt.style.use('grayscale')
 
@@ -25,7 +25,60 @@ def admin_plot_img(date_range, y_axis_lbls, vals_two_dim, plot_title):
                         ha="center", va="center", color="r")
     axs.set_title(plot_title)  # Add a title to the axes.
     axs.legend()  # Add a legend.    
-    axs.set_xticklabels(axs.get_xticklabels(), rotation=315, ha='right')
+    axs.set_xticklabels(axs.get_xticklabels(), rotation=315, ha='left')
+
+    pngImage = BytesIO()
+    FigureCanvas(fig).print_png(pngImage)
+    # Encode PNG image to base64 string
+    pngImageB64String = "data:image/png;base64,"
+    pngImageB64String += base64.b64encode(pngImage.getvalue()).decode('utf8')
+    return pngImageB64String
+
+
+def time_bucket_bar_plot_img(date_range, values, y_lbl, graph_title, legend_txt):
+    plt.rcParams.update({'font.size': 10})
+    plt.style.use('grayscale')
+    width = 0.2
+    fig = Figure()
+    axs = fig.add_subplot(1, 1, 1)
+    # remove the year from yyyy-mm-dd
+    date_range_no_year = [d[5:] for d in date_range]
+ 
+    axs.bar(date_range_no_year, values, width, label=legend_txt, color=(0.8, 0.2, 0.2, 0.5))  
+    axs.bar_label(axs.containers[0])
+    axs.set_ylabel(y_lbl, fontsize=10)  # Add a y-label to the axes.
+    axs.set_title(graph_title)  # Add a title to the axes.
+    axs.legend()  # Add a legend.  
+    axs.xaxis.set_ticks(date_range_no_year)
+    axs.set_xticklabels(date_range_no_year, rotation=315, ha='left')
+
+    pngImage = BytesIO()
+    FigureCanvas(fig).print_png(pngImage)
+    # Encode PNG image to base64 string
+    pngImageB64String = "data:image/png;base64,"
+    pngImageB64String += base64.b64encode(pngImage.getvalue()).decode('utf8')
+    return pngImageB64String
+
+
+
+def time_bucket_double_bar_plot_img(date_range, vals1, vals2, y_lbl, graph_title, legend_txt1, legend_txt2):
+    plt.rcParams.update({'font.size': 10})
+    plt.style.use('grayscale')
+    width = 0.2
+    fig = Figure()
+    axs = fig.add_subplot(1, 1, 1)
+    # remove the year from yyyy-mm-dd
+    date_range_no_year = [d[5:] for d in date_range]
+ 
+    ind = np.arange(len(date_range)) 
+    width = 0.2
+    axs.bar(ind, vals1, width, label=legend_txt1, color=(0.8, 0.2, 0.2, 0.5))  # Plot some data on the axes.
+    axs.bar(ind+width, vals2, width, label=legend_txt2,color=(0.2, 0.2, 0.8, 0.5))  # Plot more data on the axes...    
+    axs.set_xticks(ind + width / 2, date_range)
+    axs.set_ylabel(y_lbl, fontsize=5)  # Add a y-label to the axes.
+    axs.set_title(graph_title)  # Add a title to the axes.
+    axs.legend()  # Add a legend.  
+    axs.set_xticklabels(date_range_no_year, rotation=315, ha='left')
 
     pngImage = BytesIO()
     FigureCanvas(fig).print_png(pngImage)

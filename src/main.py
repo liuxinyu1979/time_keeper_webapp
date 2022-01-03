@@ -24,7 +24,7 @@ if time_keeper_dao.db_exist == False:
 
 @app.route('/')
 def home():
-    return render_template("home.html", admin_action_graph="home")
+    return render_template("home.html")
 
 @app.route('/<string:user_name>')
 def greeting(user_name):
@@ -59,12 +59,24 @@ def show_admin_graphs():
     success_flags, date_range, success_flags_hit_count, action_names, actions_hit_count  = time_keeper_dao.retrieve_admin_stat()
 
     action_imgs = []
-    action_imgs.append(plotgraphs.admin_plot_img(date_range, success_flags, success_flags_hit_count, "Admin password attempt heatmap"))
-    action_imgs.append(plotgraphs.admin_plot_img(date_range, action_names, actions_hit_count, "Admin actions heatmap"))
-    
-    return render_template("home.html", admin_action_graphs=action_imgs, graph_count=len(action_imgs), cols = 2)
+    action_imgs.append(plotgraphs.heatmap_plot_img(date_range, success_flags, success_flags_hit_count, "Admin password attempt heatmap"))
+    action_imgs.append(plotgraphs.heatmap_plot_img(date_range, action_names, actions_hit_count, "Admin actions heatmap"))
+    # display two images in one row in full screen
+    return render_template("graphs.html", admin_action_graphs=action_imgs, graph_count=len(action_imgs), cols = 2)
 
 
+@app.route('/show_time_bucket_graphs', methods=['GET'])
+def show_time_bucket_graphs():
+    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1)
+
+    time_bucket_imgs = []
+
+    time_bucket_imgs.append(plotgraphs.time_bucket_double_bar_plot_img(date_range, used, added, 'minutes', 'used minutes', "dates vs minutes", 'minutes used'))
+    time_bucket_imgs.append(plotgraphs.time_bucket_bar_plot_img(date_range, used, 'used minutes', "used minutes per day", 'minutes used'))
+    time_bucket_imgs.append(plotgraphs.time_bucket_bar_plot_img(date_range, added, 'added minutes', "Added minutes per day", 'minutes added'))
+    time_bucket_imgs.append(plotgraphs.heatmap_plot_img(hrs, ampm, hit_count, "Admin actions heatmap"))
+    # display two images in one row in full screen
+    return render_template("graphs.html", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
 
 
 # retrieve all time graphs
