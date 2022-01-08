@@ -4,19 +4,19 @@ from timekeeperdao import TimeKeeperDao
 from config import DevConfig
 from flask_pymongo import PyMongo
 import plotgraphs
-# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-# from matplotlib.figure import Figure
-# import matplotlib.pyplot as plt
-# import numpy as np
-# import base64
-# from io import BytesIO
-
-
 
 app = Flask(__name__)
+# the routes module is going to import the flask app object, so keep the import below app = Flask...
+from user import routes
+from user.userregform import UserRegistrationForm
+
 app.config.from_object(DevConfig)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/testtimedb"
 app.config["MONGODB_CONNECTION_TIMEOUT_MS"] = 100
+app.config["SECRET_KEY"] = "my secret key"
+
+
+
 time_keeper_dao = TimeKeeperDao(app)
 if time_keeper_dao.db_exist == False:
     print("db not exist")
@@ -25,6 +25,17 @@ if time_keeper_dao.db_exist == False:
 @app.route('/')
 def home():
     return render_template("home.html")
+
+@app.route('/registration', methods=['GET', 'POST'])
+def registration():
+
+    user_name = None
+    registration_form = UserRegistrationForm()
+    if registration_form.validate_on_submit():
+        user_name = registration_form.user_name.data
+        registration_form.user_name.data = ''
+
+    return render_template("registration.html", user_name = user_name, registration_form = registration_form)
 
 @app.route('/show_admin_graphs', methods=['GET'])
 def show_admin_graphs():
@@ -49,6 +60,7 @@ def show_time_bucket_graphs():
     time_bucket_imgs.append(plotgraphs.heatmap_plot_img(hrs, ampm, hit_count, "Admin actions heatmap"))
     # display two images in one row in full screen
     return render_template("graphs.html", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
+
 
 
 '''

@@ -18,7 +18,7 @@ RUN apt-get install -y vim
 RUN apt-get install -y net-tools
 
 EXPOSE 5000
-ENV FLASK_APP=src/main.py
+ENV FLASK_APP=src/app.py
 # need the "--host", "0.0.0.0" so that access from localhost is possible
 CMD ["flask", "run", "--host", "0.0.0.0"]
 
