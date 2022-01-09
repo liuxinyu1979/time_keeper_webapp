@@ -26,16 +26,16 @@ if time_keeper_dao.db_exist == False:
 def home():
     return render_template("home.html")
 
-@app.route('/registration', methods=['GET', 'POST'])
-def registration():
+# @app.route('/registration', methods=['GET', 'POST'])
+# def registration():
 
-    user_name = None
-    registration_form = UserRegistrationForm()
-    if registration_form.validate_on_submit():
-        user_name = registration_form.user_name.data
-        registration_form.user_name.data = ''
+#     user_name = None
+#     registration_form = UserRegistrationForm()
+#     if registration_form.validate_on_submit():
+#         user_name = registration_form.user_name.data
+#         registration_form.user_name.data = ''
 
-    return render_template("registration.html", user_name = user_name, registration_form = registration_form)
+#     return render_template("registration.html", user_name = user_name, registration_form = registration_form)
 
 @app.route('/show_admin_graphs', methods=['GET'])
 def show_admin_graphs():

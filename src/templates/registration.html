@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container">
 	<div class="d-flex justify-content-center h-100">
-		<div class="card">
+		<div class="card" style="width: 36rem;">
 			<div class="card-header">
 				<h3>Sign In</h3>
 				<div class="d-flex justify-content-end social_icon">
@@ -12,30 +12,55 @@
 			</div>
 			<div class="card-body">
 				<form method="POST">
+					<div class="input-group form-group justify-content-left">
+
+                            <div class="col col-4 text-left">
+
+                            {{ registration_form.user_name.label(class="form-label") }}
+                            </div>
+                            <div class="col col-8">
+
+                            {{ registration_form.user_name(class="form-control") }}
+                            </div>
+
+					</div>
+                    <div class="input-group form-group justify-content-left">
+
+
+                            <div class="col col-4 text-left">
+                                {{ registration_form.email.label(class="form-label") }}
+
+                            </div>
+                            <div class="col col-8">
+                                {{ registration_form.email(class="form-control") }}
+
+                            </div>
+					</div>
 					<div class="input-group form-group">
-                        {{ registration_form.user_name.label(class="form-label") }}
-                        {{ registration_form.user_name(class="form-control") }}
-						
+
+
+                            <div class="col col-4 text-left">
+                            {{ registration_form.password.label(class="form-label") }}
+                            </div>
+                            <div class="col col-8">
+
+                            {{ registration_form.password(class="form-control") }}
+                            </div>
+
 					</div>
                     <div class="input-group form-group">
-
-                        {{ registration_form.email.label(class="form-label") }}
-                        {{ registration_form.email(class="form-control") }}
-						
-					</div>
-					<div class="input-group form-group">
-
-                        {{ registration_form.password.label(class="form-label") }}
-                        {{ registration_form.password(class="form-control") }}
-					</div>
-                    <div class="input-group form-group">
+                        <div class="col col-4 text-left">
 
                         {{ registration_form.password2.label(class="form-label") }}
+                        </div>
+                        <div class="col col-8">
+
                         {{ registration_form.password2(class="form-control") }}
+                        </div>
 					</div>
 
 					<div class="form-group">
-                        {{ registration_form.submit(class="btn float-right login_btn") }}
+                        {{ registration_form.submit(class="btn float-center login_btn") }}
 
 					</div>
 				</form>
