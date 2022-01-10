@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request
 from user.user import User
 from user.userregform import UserRegistrationForm
-
-from main import app
+from werkzeug.security import generate_password_hash
+from main import app, account_mgmt
 
 
 # Obviously when user enter url http://<base url>/registration, we will render the form since the request.method == 'GET'
@@ -11,7 +11,8 @@ from main import app
 def registration():
     registration_form = UserRegistrationForm()
     if request.method == 'POST' and registration_form.validate():
-        return User().signup()
+        password_hashed = generate_password_hash(registration_form.password.data)
+        return account_mgmt.signup(registration_form.user_name.data, registration_form.email.data, password_hashed)
 
     user_name = None
     if registration_form.validate_on_submit():

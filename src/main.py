@@ -1,21 +1,21 @@
 from time import time
 from flask import Flask, render_template,jsonify
 from timekeeperdao import TimeKeeperDao
+from user.user import User
+
 from config import DevConfig
 from flask_pymongo import PyMongo
 import plotgraphs
 
 app = Flask(__name__)
-# the routes module is going to import the flask app object, so keep the import below app = Flask...
-from user import routes
-from user.userregform import UserRegistrationForm
-
 app.config.from_object(DevConfig)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/testtimedb"
 app.config["MONGODB_CONNECTION_TIMEOUT_MS"] = 100
 app.config["SECRET_KEY"] = "my secret key"
+account_mgmt = User(app)
 
-
+# the routes module is going to import the flask app object, so keep the import below app = Flask...
+from user import routes
 
 time_keeper_dao = TimeKeeperDao(app)
 if time_keeper_dao.db_exist == False:
@@ -25,17 +25,6 @@ if time_keeper_dao.db_exist == False:
 @app.route('/')
 def home():
     return render_template("home.html")
-
-# @app.route('/registration', methods=['GET', 'POST'])
-# def registration():
-
-#     user_name = None
-#     registration_form = UserRegistrationForm()
-#     if registration_form.validate_on_submit():
-#         user_name = registration_form.user_name.data
-#         registration_form.user_name.data = ''
-
-#     return render_template("registration.html", user_name = user_name, registration_form = registration_form)
 
 @app.route('/show_admin_graphs', methods=['GET'])
 def show_admin_graphs():
