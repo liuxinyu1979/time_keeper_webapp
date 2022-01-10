@@ -24,6 +24,12 @@ class User:
             self.time_db_tracker_accounts.create_index([("name", flask_pymongo.DESCENDING)], unique=True, name="loginNameIdx")
 
 
+    def acc_name_exist(self, acc_name):
+        if self.time_db_tracker_accounts.find_one({'name':acc_name}):
+            return True
+        return False
+
+
     def signup(self, acc_name, email, password):
         time_now = datetime.now()
         new_acc = {
@@ -34,7 +40,7 @@ class User:
             "updated_on": time_now
         }
 
-        if self.time_db_tracker_accounts.find_one({'name':acc_name}) != None:
+        if self.acc_name_exist(acc_name):
             return jsonify({"error":"account already exist"}), 400
         self.time_db_tracker_accounts.insert_one(new_acc)
 
