@@ -12,15 +12,16 @@
 			</div>
 			<div class="card-body">
 				<form method="POST">
+                    {{ registration_form.csrf_token() }}
 					<div class="input-group form-group justify-content-left">
 
                             <div class="col col-4 text-left">
 
-                            {{ registration_form.user_name.label(class="form-label") }}
+                                {{ registration_form.user_name.label(class="form-label") }}
                             </div>
                             <div class="col col-8">
 
-                            {{ registration_form.user_name(class="form-control") }}
+                                {{ registration_form.user_name(class="form-control") }}
                             </div>
 
 					</div>
@@ -58,6 +59,11 @@
                         {{ registration_form.password2(class="form-control") }}
                         </div>
 					</div>
+                    {% for field, errors in registration_form.errors.items() %}
+                    <small class="form-text text-muted ">
+                        {{ ', '.join(errors) }}
+                    </small>
+                    {% endfor %}                    
 
 					<div class="form-group">
                         {{ registration_form.submit(class="btn float-center login_btn") }}
