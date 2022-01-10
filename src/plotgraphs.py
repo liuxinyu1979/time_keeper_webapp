@@ -13,7 +13,10 @@ def heatmap_plot_img(date_range, y_axis_lbls, vals_two_dim, plot_title):
     fig = Figure()
     axs = fig.add_subplot(1, 1, 1)
     # remove the year from yyyy-mm-dd
-    date_range_no_year = [d[5:] for d in date_range]
+    date_range_no_year = date_range
+
+    if len(date_range[0]) >= 3:
+        date_range_no_year = [d[5:] for d in date_range]
     axs.imshow(vals_two_dim, cmap = 'Greens')
     # Show all ticks and label them with the respective list entries
     axs.set_xticks(np.arange(len(date_range_no_year)), labels=date_range_no_year)
