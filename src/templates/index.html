@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "indexBase.html" %}
 {% block title %}Home{% endblock %}
-<!-- home page for Cronus's Harpe, Charpe.io -->
+
 {% block content %}
 <h1>Welcome to Chronos</h1>
 <p>Chronos is an app that does time keeping. </p>
@@ -11,26 +11,26 @@
     <p>monitor the time usage</p>
 </ul>
 <div class="container">
-	<div class="d-flex justify-content-center h-100">
-		<div class="card" style="width: 36rem;">
-			<div class="card-header">
-				<h3>Time Management Graph</h3>
-				<div class="d-flex justify-content-end social_icon">
-				</div>
-			</div>
-			<div class="card-body">
+    <div class="d-flex justify-content-center h-100">
+        <div class="card" style="width: 36rem;">
+            <div class="card-header">
+                <h3>Time Management Graph</h3>
+                <div class="d-flex justify-content-end social_icon">
+                </div>
+            </div>
+            <div class="card-body">
                 <img class="card-img-top" src="static/images/time_used_example.png" alt="TimeUsedExample">
                 This is an example of time used graph
             </div>
         </div>
 
-		<div class="card" style="width: 36rem;">
-			<div class="card-header">
-				<h3>Admin Action Graph</h3>
-				<div class="d-flex justify-content-end social_icon">
-				</div>
-			</div>
-			<div class="card-body">
+        <div class="card" style="width: 36rem;">
+            <div class="card-header">
+                <h3>Admin Action Graph</h3>
+                <div class="d-flex justify-content-end social_icon">
+                </div>
+            </div>
+            <div class="card-body">
                 <img class="card-img-top" src="static/images/admin_action_example.png" alt="TimeUsedExample">
                 This is an example of admin action graph
             </div>
@@ -38,5 +38,6 @@
 
     </div>
 </div>
-
-{% endblock %}
+        
+<br/>
+{% endblock %}           

@@ -22,9 +22,13 @@ if time_keeper_dao.db_exist == False:
     print("db not exist")
     exit()
 
-@app.route('/')
+@app.route('/home')
 def home():
     return render_template("home.html")
+
+@app.route('/')
+def index():
+    return render_template("index.html")
 
 @app.route('/show_admin_graphs', methods=['GET'])
 def show_admin_graphs():
