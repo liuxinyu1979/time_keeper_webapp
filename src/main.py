@@ -23,8 +23,11 @@ if time_keeper_dao.db_exist == False:
     exit()
 
 @app.route('/home')
-def home():
-    return render_template("home.html")
+@app.route('/home/<user_name>')
+def home(user_name=None):
+    print(f"user {user_name} is called")
+    return render_template("home.html", user_name = user_name)
+
 
 @app.route('/')
 def index():

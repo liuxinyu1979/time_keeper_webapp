@@ -2,7 +2,11 @@
 {% block title %}Home{% endblock %}
 <!-- home page for Cronus's Harpe, Charpe.io -->
 {% block content %}
+{% if user_name is none -%}
 <h1>Welcome to Chronos</h1>
+{% else %}
+<h1>Welcome to Chronos {{ user_name }}</h1>
+{%- endif %}
 <p>Chronos is an app that does time keeping. </p>
 <p>In other words, it allows the following</p>
 <ul>

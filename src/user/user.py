@@ -28,7 +28,9 @@ class User:
         if self.time_db_tracker_accounts.find_one({'name':acc_name}):
             return True
         return False
-
+    
+    def get_user(self, acc_name):
+        return self.time_db_tracker_accounts.find_one({'name':acc_name})
 
     def signup(self, acc_name, email, password):
         time_now = datetime.now()

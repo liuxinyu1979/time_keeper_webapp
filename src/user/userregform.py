@@ -13,3 +13,16 @@ class UserRegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired()])
     password2 = PasswordField('Repeat Password', validators=[InputRequired(), EqualTo('password', message="password must match")])
     submit = SubmitField('Register')
+
+
+class UserLoginForm(FlaskForm):
+    min_name_len = 3
+    max_name_len = 64
+
+    user_name = StringField("User Name", 
+                validators=[InputRequired(), 
+                    Length(min=min_name_len, max=max_name_len, message=f"user name length must be between {min_name_len} and {max_name_len}")])
+
+    password = PasswordField('Password', validators=[InputRequired()])
+
+    submit = SubmitField('Login')
