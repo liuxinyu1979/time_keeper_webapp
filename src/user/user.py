@@ -2,8 +2,9 @@ from flask import Flask, jsonify
 import flask_pymongo
 from flask_pymongo import PyMongo
 from datetime import datetime
+from bson.objectid import ObjectId
 
-class User:
+class User():
 
     def __init__(self, app):
         self.mongo = PyMongo(app)
@@ -47,5 +48,6 @@ class User:
         self.time_db_tracker_accounts.insert_one(new_acc)
 
         acc_in_db = self.time_db_tracker_accounts.find_one({'name':acc_name}) 
-        del acc_in_db['_id']
-        return jsonify(acc_in_db), 200
+        return acc_in_db
+
+    
