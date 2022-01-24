@@ -8,9 +8,11 @@ AdminAction = Enum('AdminAction', 'Pause Unpause wifion')
 
 class TimeKeeperDao:
     def __init__(self, app):
-        self.remaining_minutes = 0
-        self.topup_minutes = 0
-        self.used_minutes = 0
+        self.test_acc = "test"
+        self.users = {self.test_acc}
+        self.remaining_minutes = {}
+        self.topup_minutes = {}
+        self.used_minutes = {}
         self.input_lines = set()
 
         self.time_keeper_db_name = "testtimedb"
@@ -21,9 +23,9 @@ class TimeKeeperDao:
         self.time_db_tracker_admin = None
 
         self.WEEKEND_REWARD_CONS_MINUTES = 35 # a one-off 35 minutes reward on Friday/Saturday/Sunday
-        self.INIT_RECORD_TABLE_PAYLOAD = {"datetime":datetime.fromtimestamp(0), 'minutesUsed':[], 'minutesAdded':[self.WEEKEND_REWARD_CONS_MINUTES]}
-        self.INIT_ADMIN_TABLE_PAYLOAD = {"datetime":datetime.fromtimestamp(0), 'action':AdminAction.Unpause.name, 'is_success':False}
-        self.INIT_IMPORTS_TABLE_PAYLOAD = {"logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
+        self.INIT_RECORD_TABLE_PAYLOAD = {"user":self.test_acc, "datetime":datetime.fromtimestamp(0), 'minutesUsed':[], 'minutesAdded':[self.WEEKEND_REWARD_CONS_MINUTES]}
+        self.INIT_ADMIN_TABLE_PAYLOAD = {"user":self.test_acc, "datetime":datetime.fromtimestamp(0), 'action':AdminAction.Unpause.name, 'is_success':False}
+        self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
 
@@ -53,20 +55,31 @@ class TimeKeeperDao:
         record_cnt = 0
         for doc in self.time_db_tracker_records.find():
             record_cnt += 1
+            user_name = self.test_acc
+            if "user" in doc:
+                user_name = doc['user']
+            self.users.add(user_name)
+
             if 'minutesUsed' in doc:
-                self.used_minutes += sum(doc['minutesUsed'])
+                if user_name in self.used_minutes:
+                    self.used_minutes[user_name] += sum(doc['minutesUsed'])
+                else:
+                    self.used_minutes[user_name] = sum(doc['minutesUsed'])
+
             if 'minutesAdded' in doc:
-                self.topup_minutes += sum(doc['minutesAdded'])
+                if user_name in self.topup_minutes:
+                    self.topup_minutes[user_name] += sum(doc['minutesAdded'])
+                else:
+                    self.topup_minutes[user_name] = sum(doc['minutesAdded'])
+
         # if the table doesn't exist, initialize it with some number of minutes
         if record_cnt == 0:
             self.time_db_tracker_records.insert_one(self.INIT_RECORD_TABLE_PAYLOAD)
             self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
             self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
-            self.time_db_tracker_accounts.insert_one(self.INIT_ACCOUNTS_TABLE_PAYLOAD)
             self.topup_minutes  = self.WEEKEND_REWARD_CONS_MINUTES
 
             self.time_db_tracker_records.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
-            self.time_db_tracker_accounts.create_index([("name", flask_pymongo.DESCENDING)], unique=True, name="loginNameIdx")
             self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
 
         # add collection on the fly if database and some collections already exist
@@ -75,12 +88,21 @@ class TimeKeeperDao:
             self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
         if "imports" not in collection_names:
             self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
+        
+        for u_name in self.users:
+            topup_minutes = 0
+            if u_name in self.topup_minutes:
+                topup_minutes = self.topup_minutes[u_name]
 
-        self.remaining_minutes = self.topup_minutes - self.used_minutes
+            used_minutes = 0
+            if u_name in self.used_minutes:
+                used_minutes = self.used_minutes[u_name]
+
+            self.remaining_minutes[u_name] = topup_minutes - used_minutes
         return True
 
 
-    def retrieve_admin_stat(self):
+    def retrieve_admin_stat(self, user_name):
 
         is_success = ['Success', 'Fail']
         actions = [AdminAction.Pause.name, AdminAction.Unpause.name, AdminAction.wifion.name]
@@ -98,6 +120,7 @@ class TimeKeeperDao:
         pl = [
             {
                 '$match': {
+                    "user":{'$eq': user_name},
                     'datetime': {
                         '$gt': date_range[0], 
                         '$lt': date_range[1]
@@ -145,7 +168,7 @@ class TimeKeeperDao:
         return is_success, dr, is_success_hit_count, actions, actions_hit_count
 
 
-    def retrieve_for_time_stat(self, start, end):
+    def retrieve_for_time_stat(self, start, end, user_name):
 
         # parallel array
         # date_range->['2021-x-y', '2021-x-y', '2021-x-y']
@@ -171,6 +194,7 @@ class TimeKeeperDao:
         hitcount_pl = [
             {
                 '$match': {
+                    "user":{'$eq': user_name},
                     'datetime':{'$lte':datetime.strptime(date_range[0], '%Y-%m-%d'),'$gte':datetime.strptime(date_range[-1], '%Y-%m-%d')}
                 }
             }, {
@@ -199,6 +223,7 @@ class TimeKeeperDao:
         used_added_minutes_pl = [
             {
                 '$match': {
+                    "user":{'$eq': user_name},
                     'datetime': {
                         '$lte': datetime.strptime(date_range[0], '%Y-%m-%d'), 
                         '$gte': datetime.strptime(date_range[-1], '%Y-%m-%d')

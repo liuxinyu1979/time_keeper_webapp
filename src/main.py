@@ -1,3 +1,4 @@
+from datetime import timedelta
 from time import time
 from flask import Flask, render_template,jsonify
 from timekeeperdao import TimeKeeperDao
@@ -7,18 +8,22 @@ from config import DevConfig
 from flask_pymongo import PyMongo
 import plotgraphs
 
+
 app = Flask(__name__)
 app.config.from_object(DevConfig)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/testtimedb"
 app.config["MONGODB_CONNECTION_TIMEOUT_MS"] = 100
+# python -c 'import secrets; print(secrets.token_hex())'
 app.config["SECRET_KEY"] = "my secret key"
+# relogin after 30 minutes
+app.permanent_session_lifetime = timedelta(minutes=30)
 account_mgmt = User(app)
+time_keeper_dao = TimeKeeperDao(app)
 
 # the routes module is going to import the flask app object, so keep the import below app = Flask...
 from user import routes
-from flask_login import login_required
+from flask_login import current_user, login_required
 
-time_keeper_dao = TimeKeeperDao(app)
 if time_keeper_dao.db_exist == False:
     print("db not exist")
     exit()
@@ -33,12 +38,17 @@ def home(user_name=None):
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+    if current_user.get_id() == None:
+        return render_template("index.html")
+
+    return render_template("home.html")
 
 @app.route('/show_admin_graphs', methods=['GET'])
 @login_required
 def show_admin_graphs():
-    success_flags, date_range, success_flags_hit_count, action_names, actions_hit_count  = time_keeper_dao.retrieve_admin_stat()
+    print(f"current use is: {current_user.get_id()}")
+   
+    success_flags, date_range, success_flags_hit_count, action_names, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(current_user.get_id())
 
     action_imgs = []
     action_imgs.append(plotgraphs.heatmap_plot_img(date_range, success_flags, success_flags_hit_count, "Admin password attempt heatmap"))
@@ -50,7 +60,9 @@ def show_admin_graphs():
 @app.route('/show_time_bucket_graphs', methods=['GET'])
 @login_required
 def show_time_bucket_graphs():
-    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1)
+    print(f"current use is: {current_user.get_id()}")
+
+    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, current_user.get_id())
 
     time_bucket_imgs = []
 
@@ -85,7 +97,9 @@ def testadminactions():
 @app.route('/retrieve_admin_stats', methods=['GET'])
 @login_required
 def retrieve_admin_stats():
-    success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat()
+    print(f"current use is: {current_user.get_id()}")
+
+    success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(current_user.get_id())
     resp = {
         "date_range": date_range,
         "attempt_flags": success_flags,
@@ -101,7 +115,9 @@ def retrieve_admin_stats():
 @app.route('/retrieve_time_stats', methods=['GET'])
 @login_required
 def retrieve_time_stats():
-    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1)
+    print(f"current use is: {current_user.get_id()}")
+
+    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, current_user.get_id())
     resp = {
         "date_range": date_range,
         "used": used,
@@ -114,6 +130,9 @@ def retrieve_time_stats():
     ss = jsonify(resp)
     print(ss)
     return ss    
+'''
+End of test endpoints
+'''
 ###################################
 
 

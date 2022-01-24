@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request,jsonify
 from user.user import User
 from user.userregform import UserRegistrationForm, UserLoginForm
 from werkzeug.security import generate_password_hash, check_password_hash
-from main import app, account_mgmt
+from main import app, account_mgmt, time_keeper_dao
 
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 
@@ -89,3 +89,82 @@ def login():
 def logout():
     logout_user()
     return render_template("index.html")
+
+from flask_httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
+
+@auth.verify_password
+def verify_password(username, password):
+    usr =  account_mgmt.get_user(username)
+    if usr == None:
+        return False
+
+    if check_password_hash(usr['password'],password):
+        return True
+    return False
+
+
+# login auth via api
+@app.route("/api/v1.0/user", methods=['GET'])
+@auth.login_required
+def get_user_api():
+    # print(f"auth current user: {auth.current_user()}")
+    return auth.current_user(), 200
+
+@app.route("/api/v1.0/get_time_stats")
+@auth.login_required
+def get_time_stats():
+    # print(f"auth current user: {auth.current_user()}")
+
+    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, auth.current_user())
+    resp = {
+        "date_range": date_range,
+        "used": used,
+        "added": added,
+        "hours":hrs,
+        "ampm": ampm,
+        "am_hit_count": hit_count[0],
+        "pm_hit_count": hit_count[1]
+    }
+    ss = jsonify(resp)
+    return ss    
+
+@app.route("/api/v1.0/get_admin_stats")
+@auth.login_required
+def get_admin_stats():
+    # print(f"auth current user: {auth.current_user()}")
+
+    success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(auth.current_user())
+    resp = {
+        "date_range": date_range,
+        "attempt_labels": success_flags,
+        success_flags[0]:success_flags_hit_count[0],
+        success_flags[1]:success_flags_hit_count[1],
+        "action_labels":actions,
+        actions[0]:actions_hit_count[0],
+        actions[1]:actions_hit_count[1],
+        actions[2]:actions_hit_count[2]
+    }
+    ss = jsonify(resp)
+    print(ss)
+    return ss
+
+
+
+
+
+'''
+Test endpoints
+'''
+# login auth via api
+@app.route("/api/v1.0/testuser", methods=['GET'])
+@auth.login_required
+def get_test_user_api():
+
+    return "testuser", 200
+
+
+
+'''
+End of test endpoints
+'''
