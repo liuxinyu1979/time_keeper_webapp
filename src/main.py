@@ -1,7 +1,8 @@
 from datetime import timedelta
 from time import time
 from flask import Flask, render_template,jsonify
-from timekeeperdao import TimeKeeperDao
+# from timekeeperdao_ import TimeKeeperDao
+from time_management.timekeeperdao import TimeKeeperDao
 from user.user import User
 
 from config import DevConfig
@@ -22,6 +23,7 @@ time_keeper_dao = TimeKeeperDao(app)
 
 # the routes module is going to import the flask app object, so keep the import below app = Flask...
 from user import routes
+from time_management import routes
 from flask_login import current_user, login_required
 
 if time_keeper_dao.db_exist == False:
@@ -32,7 +34,6 @@ if time_keeper_dao.db_exist == False:
 @app.route('/home/<user_name>')
 @login_required
 def home(user_name=None):
-    print(f"user {user_name} is called")
     return render_template("home.html", user_name = user_name)
 
 
@@ -46,8 +47,6 @@ def index():
 @app.route('/show_admin_graphs', methods=['GET'])
 @login_required
 def show_admin_graphs():
-    print(f"current use is: {current_user.get_id()}")
-   
     success_flags, date_range, success_flags_hit_count, action_names, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(current_user.get_id())
 
     action_imgs = []
@@ -60,8 +59,6 @@ def show_admin_graphs():
 @app.route('/show_time_bucket_graphs', methods=['GET'])
 @login_required
 def show_time_bucket_graphs():
-    print(f"current use is: {current_user.get_id()}")
-
     date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, current_user.get_id())
 
     time_bucket_imgs = []
@@ -97,8 +94,6 @@ def testadminactions():
 @app.route('/retrieve_admin_stats', methods=['GET'])
 @login_required
 def retrieve_admin_stats():
-    print(f"current use is: {current_user.get_id()}")
-
     success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(current_user.get_id())
     resp = {
         "date_range": date_range,
@@ -115,8 +110,6 @@ def retrieve_admin_stats():
 @app.route('/retrieve_time_stats', methods=['GET'])
 @login_required
 def retrieve_time_stats():
-    print(f"current use is: {current_user.get_id()}")
-
     date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, current_user.get_id())
     resp = {
         "date_range": date_range,

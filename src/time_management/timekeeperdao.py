@@ -13,6 +13,7 @@ class TimeKeeperDao:
         self.remaining_minutes = {}
         self.topup_minutes = {}
         self.used_minutes = {}
+        # todo: deal with the user based import
         self.input_lines = set()
 
         self.time_keeper_db_name = "testtimedb"
@@ -28,6 +29,18 @@ class TimeKeeperDao:
         self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
+
+
+
+
+    def topup_minutes_in_db(self, number_of_minutes, user):
+        if number_of_minutes < 0 or user not in self.users:
+            return "Please check number of minutes {number_of_minutes} and user {user} are valid", False
+
+        self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
+        self.topup_minutes[user] += number_of_minutes
+        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
+        return "", True
 
 
 
@@ -252,3 +265,5 @@ class TimeKeeperDao:
             added[loc] = doc['minutesAddedSum']
 
         return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count_vals
+
+
