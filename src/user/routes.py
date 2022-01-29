@@ -103,7 +103,7 @@ def verify_password(username, password):
 @app.route("/api/v1.0/user", methods=['GET'])
 @auth.login_required
 def get_user_api():
-    return auth.current_user(), 200
+    return jsonify({"user_name":auth.current_user()}), 200
 
 
 '''

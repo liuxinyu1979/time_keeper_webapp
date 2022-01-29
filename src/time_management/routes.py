@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request,jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
-
+from datetime import datetime
 
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
@@ -32,11 +32,30 @@ def add_minutes():
     
     minutes_val = req_body['minutes']
 
-    err, status = time_keeper_dao.topup_minutes_in_db(minutes_val, auth.current_user())
-    if status == False:
-        return err, 400
+    value, err = time_keeper_dao.topup_minutes_in_db(minutes_val, auth.current_user())
+    if len(err) > 0:
+        return jsonify(err), 400
     
-    return "", 200
+    return jsonify(value), 200
+
+@app.route('/api/v1.0/minutes', methods=['GET'])
+@auth.login_required
+def get_minutes():
+    params = request.args.to_dict()
+    type_vals = {'added','used'}
+    if params == None or len(params) != 2 or 'type' not in params or 'date' not in params or params['type'] not in type_vals or len(params['date']) != 10:
+        return {"error": "invalid parameter, correct type is ?type=[added|used]&date=[YYYY-MM-DD]"}, 400
+    dt = None
+    try:
+        dt = datetime.fromisoformat(params['date'])
+    except ValueError as e:
+        return {"error": "invalid parameter, correct type is ?type=[added|used]&date=[YYYY-MM-DD]"}, 400
+    records, err = time_keeper_dao.get_minutes_in_db(auth.current_user(), dt)
+    if len(err) > 0:
+        return "Not found", 404
+    if records == None:
+        return {"added":[]}, 200
+    return {"added":records['minutesAdded']}, 200
 
 
 @app.route("/api/v1.0/get_time_stats")

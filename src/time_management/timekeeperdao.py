@@ -31,17 +31,22 @@ class TimeKeeperDao:
         self.db_exist = self.init_with_db()
 
 
-
-
+    # returns value, 
     def topup_minutes_in_db(self, number_of_minutes, user):
         if number_of_minutes < 0 or user not in self.users:
-            return "Please check number of minutes {number_of_minutes} and user {user} are valid", False
+            return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
 
         self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
         self.topup_minutes[user] += number_of_minutes
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
-        return "", True
+        return {"remaining_minutes":self.remaining_minutes[user]}, ""
 
+
+    def get_minutes_in_db(self, user, queried_date_time):
+        if user not in self.users:
+            return {}, "user {user} is not valid"
+        rec = self.time_db_tracker_records.find_one({'user':user, 'datetime':queried_date_time})
+        return rec, ""
 
 
     def admin_action_get_one(self):
