@@ -41,6 +41,12 @@ class TimeKeeperDao:
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
 
+    def record_admin_action(self, admin_action, is_successful, user):
+        if admin_action not in set([v.name for v in AdminAction]):
+            return False, "Unrecognized admin action"
+        self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
+        return True, ""
+        
 
     def get_minutes_in_db(self, user, queried_date_time):
         if user not in self.users:
