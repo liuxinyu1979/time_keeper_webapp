@@ -44,18 +44,26 @@ def record_admin_actions():
 @auth.login_required
 def add_minutes():
     req_body = request.get_json(force=True)
+
+    type_vals = {'added','used'}
+
     err_msg = ""
-    if 'minutes' not in req_body:
-        err_msg = "request body missing minutes count"
-    elif type(req_body['minutes']) != int or req_body['minutes']  <= 0:
-        err_msg = "minutes value must be greater than 0"
+    if 'minutes' not in req_body or 'type' not in req_body:
+        err_msg = "request body must have minutes and type"
+    elif type(req_body['minutes']) != int or req_body['minutes']  <= 0 or req_body['type'] not in type_vals:
+        err_msg = "minutes value must be greater than 0 and type must be either added or used"
     
     if len(err_msg) > 0:
         return jsonify({"error":err_msg}), 400
+    minutes_val = int(req_body['minutes'])
     
-    minutes_val = req_body['minutes']
-
-    value, err = time_keeper_dao.topup_minutes_in_db(minutes_val, auth.current_user())
+    value = {} 
+    err = ""
+    if req_body['type'] == 'added':
+        value, err = time_keeper_dao.record_minutes_added(minutes_val, auth.current_user())
+    else: # type == used
+        value, err = time_keeper_dao.record_minutes_used(minutes_val, auth.current_user())
+        
     if len(err) > 0:
         return jsonify(err), 400
     

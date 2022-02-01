@@ -30,9 +30,13 @@ class TimeKeeperDao:
 
         self.db_exist = self.init_with_db()
 
+    def record_admin_action(self, admin_action, is_successful, user):
+        if admin_action not in set([v.name for v in AdminAction]):
+            return False, "Unrecognized admin action"
+        self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
+        return True, ""
 
-    # returns value, 
-    def topup_minutes_in_db(self, number_of_minutes, user):
+    def record_minutes_added(self, number_of_minutes, user):
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
 
@@ -41,12 +45,19 @@ class TimeKeeperDao:
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
 
-    def record_admin_action(self, admin_action, is_successful, user):
-        if admin_action not in set([v.name for v in AdminAction]):
-            return False, "Unrecognized admin action"
-        self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
-        return True, ""
+    def record_minutes_used(self, number_of_minutes, user):
+        if number_of_minutes < 0 or user not in self.users:
+            return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
         
+        today_time = datetime.today()
+        tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
+        timestamp_part = {"hr":today_time.hour, "minute": today_time.minute, "second": today_time.second}
+        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsed':number_of_minutes}}, upsert=True)
+        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsedTimeStamp':timestamp_part}}, upsert=True)
+        
+        self.used_minutes[user] += number_of_minutes
+        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
+        return {"remaining_minutes":self.remaining_minutes[user]}, ""
 
     def get_minutes_in_db(self, user, queried_date_time):
         if user not in self.users:
