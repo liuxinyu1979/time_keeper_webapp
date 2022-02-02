@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Graphs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row-fluid mt-md-n5">
+        <form action = "http://localhost:5000/time_file_upload" method = "POST" enctype = "multipart/form-data">
+        <input type = "file" name = "file" />
+        <input type = "submit"/>
+        </form>   
+        <br/>
+        <br/>
+    </div>
+</div>
+{% endblock %}

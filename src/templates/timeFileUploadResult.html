@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Graphs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row-fluid mt-md-n5">
+        {% if time_file_upload_success == true %}
+            <p>file {{file_name}} upload successful</p>
+            <p>time remaining: {{remaining_time}}</p>
+
+        {% else%}
+            <p>file {{file_name}} upload failed</p>
+        {% endif %}
+        <br/>
+        <br/>
+    </div>
+</div>
+{% endblock %}

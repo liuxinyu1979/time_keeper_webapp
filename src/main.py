@@ -1,6 +1,6 @@
 from datetime import timedelta
 from time import time
-from flask import Flask, render_template,jsonify
+from flask import Flask, render_template,jsonify, request
 # from timekeeperdao_ import TimeKeeperDao
 from time_management.timekeeperdao import TimeKeeperDao
 from user.user import User
@@ -44,6 +44,21 @@ def index():
 
     return render_template("home.html")
 
+@app.route('/time_file_upload', methods=['GET', 'POST'])
+@login_required
+def upload_time_file():
+    if request.method == 'POST':
+        upload_file_name = request.files['file'].filename
+        time_file_upload_success = True
+        if upload_file_name == 'rbeRating.csv':
+            time_file_upload_success = False
+            
+        remaining_time = 50
+        return render_template("/timeFileUploadResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
+
+    return render_template('timeFileUpload.html')
+
+
 @app.route('/show_admin_graphs', methods=['GET'])
 @login_required
 def show_admin_graphs():
@@ -79,7 +94,7 @@ Test functions start
 @app.route('/<string:user_name>')
 @login_required
 def greeting(user_name):
-    return f"<h1>Hello {user_name}</h1>"
+    return f"<h1>Greeting: Hello {user_name}</h1>"
 
 @app.route('/test_admin_actions', methods=['GET'])
 @login_required
