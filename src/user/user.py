@@ -15,7 +15,7 @@ class User():
             db = self.mongo.db
 
         except:
-            print("mongo db doesn't exist")
+            print("Log: mongo db doesn't exist")
             return False
 
         self.INIT_ACCOUNTS_TABLE_PAYLOAD = {"name": "test","email": "test@au4tech.com","password": "", "created_on":datetime.fromtimestamp(0), "updated_on":datetime.fromtimestamp(0)}

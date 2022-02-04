@@ -8,7 +8,7 @@ AdminAction = Enum('AdminAction', 'Pause Unpause wifion')
 
 class TimeKeeperDao:
     def __init__(self, app):
-        self.test_acc = "test"
+        self.test_acc = "test_no_name"
         self.users = {self.test_acc}
         self.remaining_minutes = {}
         self.topup_minutes = {}
@@ -29,6 +29,11 @@ class TimeKeeperDao:
         self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
+
+
+
+    def minutes_left(self, user):
+        return self.remaining_minutes[user]
 
     def record_admin_action(self, admin_action, is_successful, user):
         if admin_action not in set([v.name for v in AdminAction]):
@@ -65,6 +70,59 @@ class TimeKeeperDao:
         rec = self.time_db_tracker_records.find_one({'user':user, 'datetime':queried_date_time})
         return rec, ""
 
+    # Adds minutes to current calendar day
+    def topup_minutes_in_db(self, number_of_minutes, user):
+        if number_of_minutes < 0:
+            return
+        self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
+        self.topup_minutes[user] += number_of_minutes
+        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
+
+    def update_minutes_used_in_db(self, number_of_minutes, user):
+        if number_of_minutes <= 0:
+            return
+        today_time = datetime.today()
+        tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
+        timestamp_part = {"hr":today_time.hour, "minute": today_time.minute, "second": today_time.second}
+        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsed':number_of_minutes}}, upsert=True)
+        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsedTimeStamp':timestamp_part}}, upsert=True)
+
+        self.used_minutes[user] += number_of_minutes
+        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
+
+    def init_time_vals_for_user(self, user):
+        self.remaining_minutes[user] = 0
+        self.used_minutes[user] = 0
+        self.topup_minutes[user] = 0
+    
+    # imports time added and used to databases. 
+    # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
+    # this is because kids often save up a bunch of topup and used records, and when we upload time, we want to see them on the 
+    # graphs right away, so we record the time towards today
+    def update_db_by_import(self, time_keeper_file, user):
+        if user not in self.users:
+            self.init_time_vals_for_user(user)
+        # read through 
+        with open(time_keeper_file, "r") as in_file:
+            # first line is to remove the header
+            line = in_file.readline()
+            line = in_file.readline()
+            while line != None and line != '' and line != '\n':
+                log = line.strip().replace(' ','').split(',')
+                log_line = ",".join(log)
+                # if the logline already exists in db, ignore it. 
+                if self.time_db_tracker_imports.find_one({'user':user, 'logline': log_line}) == None:
+                    self.time_db_tracker_imports.insert_one({'user':user,'logline': log_line})
+                    v = int(log[2])
+                    if log[1] == 'topup':
+                        self.topup_minutes_in_db(v, user)
+                    elif log[1] == 'used':
+                        self.update_minutes_used_in_db(v, user)
+
+                line = in_file.readline()
+        
+        return True
+
 
     def admin_action_get_one(self):
         v = self.time_db_tracker_admin.find_one()
@@ -78,7 +136,7 @@ class TimeKeeperDao:
             db = self.mongo.db
 
         except:
-            print("mongo db doesn't exist")
+            print("Log: mongo db doesn't exist")
             return False
         
         self.time_db_tracker_records = self.mongo.db.records
@@ -134,6 +192,7 @@ class TimeKeeperDao:
                 used_minutes = self.used_minutes[u_name]
 
             self.remaining_minutes[u_name] = topup_minutes - used_minutes
+
         return True
 
 

@@ -8,7 +8,7 @@ from user.user import User
 from config import DevConfig
 from flask_pymongo import PyMongo
 import plotgraphs
-
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config.from_object(DevConfig)
@@ -27,7 +27,7 @@ from time_management import routes
 from flask_login import current_user, login_required
 
 if time_keeper_dao.db_exist == False:
-    print("db not exist")
+    print("Log: db not exist")
     exit()
 
 @app.route('/home')
@@ -44,16 +44,21 @@ def index():
 
     return render_template("home.html")
 
+import tempfile
+import os
 @app.route('/time_file_upload', methods=['GET', 'POST'])
 @login_required
 def upload_time_file():
     if request.method == 'POST':
-        upload_file_name = request.files['file'].filename
-        time_file_upload_success = True
-        if upload_file_name == 'rbeRating.csv':
-            time_file_upload_success = False
+        uploaded_file = request.files['file']
+        upload_file_name = secure_filename(request.files['file'].filename)
+        tmpdir = tempfile.gettempdir()
+        tmp_file = os.path.join(tmpdir, upload_file_name)
+        uploaded_file.save(tmp_file)
+        user = current_user.get_id()
+        time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
             
-        remaining_time = 50
+        remaining_time = time_keeper_dao.minutes_left(user)
         return render_template("/timeFileUploadResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
 
     return render_template('timeFileUpload.html')
@@ -118,7 +123,6 @@ def retrieve_admin_stats():
         actions[2]:actions_hit_count[2]
     }
     ss = jsonify(resp)
-    print(ss)
     return ss
 
 # retrieve all time graphs
@@ -136,7 +140,6 @@ def retrieve_time_stats():
         "pm_hit_count": hit_count[1]
     }
     ss = jsonify(resp)
-    print(ss)
     return ss    
 '''
 End of test endpoints
