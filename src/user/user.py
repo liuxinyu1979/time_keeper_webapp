@@ -4,11 +4,13 @@ from flask_pymongo import PyMongo
 from datetime import datetime
 from bson.objectid import ObjectId
 
+
 class User():
 
-    def __init__(self, app):
+    def __init__(self, app, time_keeper_dao):
         self.mongo = PyMongo(app)
         self.time_db_tracker_accounts = self.mongo.db.accounts
+        self.time_keeper_dao = time_keeper_dao
 
         try:
             cx = self.mongo.cx.server_info()
@@ -46,7 +48,8 @@ class User():
         if self.acc_name_exist(acc_name):
             return jsonify({"error":"account already exist"}), 400
         self.time_db_tracker_accounts.insert_one(new_acc)
-
+        # Award a 35 minutes as signup bonus 
+        self.time_keeper_dao.init_time_vals_for_user(acc_name, 0, 35)
         acc_in_db = self.time_db_tracker_accounts.find_one({'name':acc_name}) 
         return acc_in_db
 

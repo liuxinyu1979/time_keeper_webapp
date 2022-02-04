@@ -72,14 +72,14 @@ class TimeKeeperDao:
 
     # Adds minutes to current calendar day
     def topup_minutes_in_db(self, number_of_minutes, user):
-        if number_of_minutes < 0:
+        if number_of_minutes < 0 or user not in self.users:
             return
         self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
         self.topup_minutes[user] += number_of_minutes
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
 
     def update_minutes_used_in_db(self, number_of_minutes, user):
-        if number_of_minutes <= 0:
+        if number_of_minutes <= 0 or user not in self.users:
             return
         today_time = datetime.today()
         tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
@@ -90,10 +90,18 @@ class TimeKeeperDao:
         self.used_minutes[user] += number_of_minutes
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
 
-    def init_time_vals_for_user(self, user):
-        self.remaining_minutes[user] = 0
-        self.used_minutes[user] = 0
+    def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
+        if user in self.users:
+            return
+        self.users.add(user)
         self.topup_minutes[user] = 0
+        self.used_minutes[user] = 0
+
+        if topup_minutes > 0:
+            self.topup_minutes_in_db(topup_minutes,user)
+        if used_minutes > 0:
+            self.update_minutes_used_in_db(used_minutes,user)
+
     
     # imports time added and used to databases. 
     # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
@@ -102,7 +110,8 @@ class TimeKeeperDao:
     # TODO: obviously this method needs to be tested a lot more
     def update_db_by_import(self, time_keeper_file, user):
         if user not in self.users:
-            self.init_time_vals_for_user(user)
+            self.init_time_vals_for_user(user, 0, 35)
+
         # The file format is 
         # date time,action,minute
         # 2022-01-17,topup,999
@@ -159,7 +168,11 @@ class TimeKeeperDao:
             user_name = self.test_acc
             if "user" in doc:
                 user_name = doc['user']
-            self.users.add(user_name)
+            if user_name not in self.users:
+                self.users.add(user_name)
+                self.topup_minutes[user_name] = 0
+                self.used_minutes[user_name] = 0
+                self.remaining_minutes[user_name] = 0
 
             if 'minutesUsed' in doc:
                 if user_name in self.used_minutes:

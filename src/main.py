@@ -21,8 +21,8 @@ app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 20
 app.config['UPLOAD_EXTENSIONS'] = ['.csv']
 # relogin after 30 minutes
 app.permanent_session_lifetime = timedelta(minutes=30)
-account_mgmt = User(app)
 time_keeper_dao = TimeKeeperDao(app)
+account_mgmt = User(app=app, time_keeper_dao=time_keeper_dao)
 
 # the routes module is going to import the flask app object, so keep the import below app = Flask...
 from user import routes

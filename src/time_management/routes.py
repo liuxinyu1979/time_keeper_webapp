@@ -18,6 +18,40 @@ def verify_password(username, password):
         return True
     return False
 
+import tempfile
+import os
+from werkzeug.utils import secure_filename
+
+@app.route('/api/v1.0/time_file', methods=['POST'])
+@auth.login_required
+def post_time_file():
+    time_file_upload_success = False
+    uploaded_file = request.files['file']
+    upload_file_name = secure_filename(request.files['file'].filename)
+    file_ext = os.path.splitext(upload_file_name)[1]
+    user = auth.current_user()
+    resp_status = 200
+    resp_msg = "upload successful"
+    if file_ext in app.config['UPLOAD_EXTENSIONS']:
+        tmpdir = tempfile.gettempdir()
+        tmp_file = os.path.join(tmpdir, upload_file_name)
+        uploaded_file.save(tmp_file)
+        time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
+        if not time_file_upload_success:
+            resp_status = 400
+            resp_msg = "File format error"
+    else:
+        resp_status = 400
+        resp_msg = f"Upload failed, only {app.config['UPLOAD_EXTENSIONS']} file extension allow"
+    remaining_time = time_keeper_dao.minutes_left(user)
+
+    resp = {
+        "status": time_file_upload_success,
+        "remaining_time": remaining_time, 
+        "message": resp_msg
+    }
+    return jsonify(resp), resp_status
+
 
 @app.route('/api/v1.0/admin_action', methods=['POST'])
 @auth.login_required
@@ -81,12 +115,15 @@ def get_minutes():
         dt = datetime.fromisoformat(params['date'])
     except ValueError as e:
         return jsonify({"error": "invalid parameter, correct type is ?type=[added|used]&date=[YYYY-MM-DD]"}), 400
+    k = 'minutesAdded' if params['type'] == 'added' else 'minutesUsed'
+
     records, err = time_keeper_dao.get_minutes_in_db(auth.current_user(), dt)
+    print(records, err)
     if len(err) > 0:
         return jsonify({"error":"Not found"}), 404
     if records == None:
-        return jsonify({"added":[]}), 200
-    return jsonify({"added":records['minutesAdded']}), 200
+        return jsonify({params['type']:[]}), 200
+    return jsonify({params['type']:records[k]}), 200
 
 
 @app.route("/api/v1.0/get_time_stats")
