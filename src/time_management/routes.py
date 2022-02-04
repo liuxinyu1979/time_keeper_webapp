@@ -3,6 +3,7 @@ from flask import Flask, render_template, request,jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
 from datetime import datetime
+from time_management.timeform import TimeForm
 
 from flask_httpauth import HTTPBasicAuth
 
@@ -158,3 +159,22 @@ def get_admin_stats():
     }
     ss = jsonify(resp)
     return ss
+
+
+@app.route('/specify_time', methods=['GET', 'POST'])
+@auth.login_required
+def specify_time():
+    time_upload_form = TimeForm()
+    if request.method == 'POST' and time_upload_form.validate():
+        user_name = auth.current_user()
+        input_minutes = time_upload_form.minutes_field.data
+        input_action = time_upload_form.action_field.data
+        print(user_name, input_minutes, input_action)
+        # add to both records collection and log collection
+        # we can direct to graphs 
+        return render_template("home.html")
+
+    if time_upload_form.validate_on_submit():
+        time_upload_form.minutes_field.data= 1
+
+    return render_template("uploadtime.html", time_upload_form = time_upload_form)

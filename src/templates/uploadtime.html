@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Enter Time{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="d-flex justify-content-center h-100">
+		<div class="card" style="width: 36rem;">
+			<div class="card-header">
+				<h3>Enter Time Info</h3>
+				<div class="d-flex justify-content-end social_icon">
+				</div>
+			</div>
+			<div class="card-body">
+				<form method="POST">
+                    {{ time_upload_form.csrf_token() }}
+					<div class="input-group form-group justify-content-left">
+
+                            <div class="col col-4 text-left">
+
+                                {{ time_upload_form.minutes_field.label(class="form-label") }}
+                            </div>
+                            <div class="col col-8">
+
+                                {{ time_upload_form.minutes_field(class="form-control") }}
+                            </div>
+
+					</div>
+                    <div class="input-group form-group justify-content-left">
+
+
+                            <div class="col col-4 text-left">
+                                {{ time_upload_form.action_field.label(class="form-label") }}
+
+                            </div>
+                            <div class="col col-8">
+                                {{ time_upload_form.action_field(class="form-control") }}
+
+                            </div>
+					</div>
+                    {% for field, errors in time_upload_form.errors.items() %}
+                    <small class="form-text text-muted ">
+                        {{ ', '.join(errors) }}
+                    </small>
+                    {% endfor %}                    
+
+					<div class="form-group">
+                        {{ time_upload_form.submit(class="btn float-center login_btn") }}
+
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
