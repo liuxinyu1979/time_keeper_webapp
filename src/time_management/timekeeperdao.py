@@ -99,16 +99,24 @@ class TimeKeeperDao:
     # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
     # this is because kids often save up a bunch of topup and used records, and when we upload time, we want to see them on the 
     # graphs right away, so we record the time towards today
+    # TODO: obviously this method needs to be tested a lot more
     def update_db_by_import(self, time_keeper_file, user):
         if user not in self.users:
             self.init_time_vals_for_user(user)
-        # read through 
+        # The file format is 
+        # date time,action,minute
+        # 2022-01-17,topup,999
         with open(time_keeper_file, "r") as in_file:
             # first line is to remove the header
             line = in_file.readline()
+            if line.strip() != "date time,action,minute":
+                return False
             line = in_file.readline()
             while line != None and line != '' and line != '\n':
+
                 log = line.strip().replace(' ','').split(',')
+                if len(log) != 3:
+                    return False
                 log_line = ",".join(log)
                 # if the logline already exists in db, ignore it. 
                 if self.time_db_tracker_imports.find_one({'user':user, 'logline': log_line}) == None:

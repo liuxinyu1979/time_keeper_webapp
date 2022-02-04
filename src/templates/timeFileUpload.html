@@ -2,14 +2,32 @@
 {% block title %}Graphs{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row-fluid mt-md-n5">
-        <form action = "/time_file_upload" method = "POST" enctype = "multipart/form-data">
-        <input type = "file" name = "file" />
-        <input type = "submit"/>
-        </form>   
-        <br/>
-        <br/>
-    </div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.css">
+
+<div class="container">
+	<div class="d-flex justify-content-center h-100">
+		<div class="card" style="width: 36rem;">
+			<div class="card-header">
+				<h3>Time File Upload</h3>
+				<div class="d-flex justify-content-end social_icon">
+				</div>
+			</div>
+			<div class="card-body">
+                <form action = "/time_file_upload" method = "POST" enctype = "multipart/form-data">
+					<div class="input-group form-group justify-content-left">
+
+                        <div class="col col-4 text-left">
+                            <td><input type = "file" name = "file" accept=".csv"/></td>
+                        </div>
+                        <div class="col col-8 text-right">
+                            <td><input type = "submit"/></td>
+                        </div>
+                </form>        
+			</div>
+            <!-- Temporarily abandon the drag and drop idea.  Will revisit later with the below example-->
+            <!-- https://towardsdatascience.com/how-to-build-a-drag-drop-form-with-python-javascript-f5e43433b005 -->
+		</div>
+	</div>
 </div>
+
 {% endblock %}

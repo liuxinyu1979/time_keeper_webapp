@@ -1,6 +1,6 @@
 from datetime import timedelta
 from time import time
-from flask import Flask, render_template,jsonify, request
+from flask import Flask, current_app, render_template,jsonify, request
 # from timekeeperdao_ import TimeKeeperDao
 from time_management.timekeeperdao import TimeKeeperDao
 from user.user import User
@@ -16,6 +16,9 @@ app.config["MONGO_URI"] = "mongodb://localhost:27017/testtimedb"
 app.config["MONGODB_CONNECTION_TIMEOUT_MS"] = 100
 # python -c 'import secrets; print(secrets.token_hex())'
 app.config["SECRET_KEY"] = "my secret key"
+# maximum file size 20MB
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 20
+app.config['UPLOAD_EXTENSIONS'] = ['.csv']
 # relogin after 30 minutes
 app.permanent_session_lifetime = timedelta(minutes=30)
 account_mgmt = User(app)
@@ -49,14 +52,18 @@ import os
 @app.route('/time_file_upload', methods=['GET', 'POST'])
 @login_required
 def upload_time_file():
+    # we first save it to tmp, and then parse that tmp file
     if request.method == 'POST':
+        time_file_upload_success = False
         uploaded_file = request.files['file']
         upload_file_name = secure_filename(request.files['file'].filename)
-        tmpdir = tempfile.gettempdir()
-        tmp_file = os.path.join(tmpdir, upload_file_name)
-        uploaded_file.save(tmp_file)
+        file_ext = os.path.splitext(upload_file_name)[1]
         user = current_user.get_id()
-        time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
+        if file_ext in current_app.config['UPLOAD_EXTENSIONS']:
+            tmpdir = tempfile.gettempdir()
+            tmp_file = os.path.join(tmpdir, upload_file_name)
+            uploaded_file.save(tmp_file)
+            time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
             
         remaining_time = time_keeper_dao.minutes_left(user)
         return render_template("/timeFileUploadResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
