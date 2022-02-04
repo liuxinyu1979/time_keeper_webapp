@@ -118,7 +118,7 @@ def get_minutes():
     k = 'minutesAdded' if params['type'] == 'added' else 'minutesUsed'
 
     records, err = time_keeper_dao.get_minutes_in_db(auth.current_user(), dt)
-    print(records, err)
+
     if len(err) > 0:
         return jsonify({"error":"Not found"}), 404
     if records == None:

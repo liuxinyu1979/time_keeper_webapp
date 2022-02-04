@@ -103,7 +103,14 @@ def verify_password(username, password):
 @app.route("/api/v1.0/user", methods=['GET'])
 @auth.login_required
 def get_user_api():
-    return jsonify({"user_name":auth.current_user()}), 200
+    user_name = auth.current_user()
+    return jsonify(
+        {
+            "user_name":user_name, 
+            "topup_minutes":time_keeper_dao.minutes_toppedup(user_name), 
+            "used_minutes": time_keeper_dao.minutes_used(user_name), 
+            "remaining_minutes": time_keeper_dao.minutes_left(user_name)
+        }), 200
 
 
 '''

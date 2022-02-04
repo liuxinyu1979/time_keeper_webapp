@@ -30,7 +30,10 @@ class TimeKeeperDao:
 
         self.db_exist = self.init_with_db()
 
-
+    def minutes_toppedup(self, user):
+        return self.topup_minutes[user]
+    def minutes_used(self, user):
+        return self.used_minutes[user]
 
     def minutes_left(self, user):
         return self.remaining_minutes[user]
