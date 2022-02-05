@@ -4,8 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
 from datetime import datetime
 from time_management.timeform import TimeForm
-
 from flask_httpauth import HTTPBasicAuth
+from flask_paginate import Pagination, get_page_parameter
+
 
 auth = HTTPBasicAuth()
 
@@ -172,11 +173,22 @@ def specify_time():
         input_action = time_upload_form.action_field.data
         time_keeper_dao.record_time_and_log(input_action, input_minutes, user_name)
         remaining_time = time_keeper_dao.minutes_left(user_name)
-        # add to both records collection and log collection
-        # we can direct to graphs 
+
         return render_template("timeManagementResult.html",file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
 
     if time_upload_form.validate_on_submit():
         time_upload_form.minutes_field.data= 1
 
     return render_template("uploadtime.html", time_upload_form = time_upload_form)
+
+@app.route('/list_time_info', methods=['GET'])
+@login_required
+def list_time_info():
+    user_name = current_user.get_id()
+    total_count = time_keeper_dao.document_count(user_name)
+    search = False
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(bs_version = 4, page=page, total=total_count, search=search, record_name='Time Info List')
+    per_page_limit = 10
+    time_records = time_keeper_dao.find_documents_by_page(user_name, page, per_page_limit)
+    return render_template("timeInfoList.html", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records)

@@ -31,6 +31,22 @@ class TimeKeeperDao:
 
         self.db_exist = self.init_with_db()
 
+    def document_count(self, user):
+        return self.time_db_tracker_records.count_documents({'user':user})
+
+    # page_num starts from 1, not 0
+    def find_documents_by_page(self, user, page_num, per_page_limit):
+        if user not in self.users or page_num <= 0  or per_page_limit <= 0:
+            return None
+        print(user, page_num, per_page_limit)
+        # find all the records from a user sorted ascending
+        # skip to the right page, eg: if page_num is 1, then we start from document 1
+        # if page_num is 2 and per_page_limit is 10, then we start from 10
+        records = self.time_db_tracker_records.find({'user':user}).skip((page_num-1)*per_page_limit).limit(per_page_limit)
+        return records
+
+
+
     def minutes_toppedup(self, user):
         return self.topup_minutes[user]
     def minutes_used(self, user):
