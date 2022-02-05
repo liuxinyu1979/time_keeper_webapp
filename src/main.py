@@ -66,7 +66,7 @@ def upload_time_file():
             time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
             
         remaining_time = time_keeper_dao.minutes_left(user)
-        return render_template("/timeFileUploadResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
+        return render_template("timeManagementResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
 
     return render_template('timeFileUpload.html')
 

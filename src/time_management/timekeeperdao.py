@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 
 AdminAction = Enum('AdminAction', 'Pause Unpause wifion')
+TimeAction = Enum('TimeAction', 'used topup')
 
 class TimeKeeperDao:
     def __init__(self, app):
@@ -134,9 +135,9 @@ class TimeKeeperDao:
                 if self.time_db_tracker_imports.find_one({'user':user, 'logline': log_line}) == None:
                     self.time_db_tracker_imports.insert_one({'user':user,'logline': log_line})
                     v = int(log[2])
-                    if log[1] == 'topup':
+                    if log[1] == TimeAction.topup.name:
                         self.topup_minutes_in_db(v, user)
-                    elif log[1] == 'used':
+                    elif log[1] == TimeAction.used.name:
                         self.update_minutes_used_in_db(v, user)
 
                 line = in_file.readline()
@@ -148,7 +149,20 @@ class TimeKeeperDao:
         v = self.time_db_tracker_admin.find_one()
         return v
 
-    
+    def record_time_and_log(self, input_action, input_minutes, user):
+        dt = datetime.today().strftime('%Y-%m-%d')
+        logline = f"{dt},{input_action},{input_minutes}"
+        
+        print(user, input_minutes)
+
+        if input_action == TimeAction.topup.name:
+            self.topup_minutes_in_db(input_minutes, user)
+        elif input_action == TimeAction.used.name:
+            self.update_minutes_used_in_db(input_minutes, user)
+        print(user, logline)
+        self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
+
+
     def init_with_db(self):
 
         try:

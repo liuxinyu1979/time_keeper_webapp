@@ -5,7 +5,11 @@
 <div class="container-fluid">
     <div class="row-fluid mt-md-n5">
         {% if time_file_upload_success == true %}
-            <p>file {{file_name}} upload successful</p>
+            {% if file_name == None %}
+                <p>Topup successful</p>
+            {% else %}
+                <p>File {{file_name}} upload successful</p>
+            {% endif%}
             <p>time remaining: {{remaining_time}}</p>
 
         {% else%}

@@ -160,19 +160,21 @@ def get_admin_stats():
     ss = jsonify(resp)
     return ss
 
+from flask_login import current_user, login_required
 
 @app.route('/specify_time', methods=['GET', 'POST'])
-@auth.login_required
+@login_required
 def specify_time():
     time_upload_form = TimeForm()
     if request.method == 'POST' and time_upload_form.validate():
-        user_name = auth.current_user()
+        user_name = current_user.get_id()
         input_minutes = time_upload_form.minutes_field.data
         input_action = time_upload_form.action_field.data
-        print(user_name, input_minutes, input_action)
+        time_keeper_dao.record_time_and_log(input_action, input_minutes, user_name)
+        remaining_time = time_keeper_dao.minutes_left(user_name)
         # add to both records collection and log collection
         # we can direct to graphs 
-        return render_template("home.html")
+        return render_template("timeManagementResult.html",file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
 
     if time_upload_form.validate_on_submit():
         time_upload_form.minutes_field.data= 1
