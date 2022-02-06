@@ -24,9 +24,13 @@
               {% endfor %}
             </tbody>
         </table>
-        <div class="d-flex justify-content-center">
+
+        <div class="d-flex justify-content-between">
+            <div class="p-2">
+                <a href="{{ url_for('export_time_csv_file') }}" class="btn btn-primary btn-md active" aria-pressed="true" role="button">Export csv</a>
+            </div>
             {{ pagination.links }}
-          </div>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request,jsonify
+from flask import Flask, render_template, request,jsonify, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
 from datetime import datetime
@@ -128,7 +128,7 @@ def get_minutes():
     return jsonify({params['type']:records[k]}), 200
 
 
-@app.route("/api/v1.0/get_time_stats")
+@app.route("/api/v1.0/get_time_stats", methods=['GET'])
 @auth.login_required
 def get_time_stats():
     date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, auth.current_user())
@@ -144,7 +144,7 @@ def get_time_stats():
     ss = jsonify(resp)
     return ss    
 
-@app.route("/api/v1.0/get_admin_stats")
+@app.route("/api/v1.0/get_admin_stats", methods=['GET'])
 @auth.login_required
 def get_admin_stats():
     success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(auth.current_user())
@@ -192,3 +192,12 @@ def list_time_info():
     per_page_limit = 10
     time_records = time_keeper_dao.find_documents_by_page(user_name, page, per_page_limit)
     return render_template("timeInfoList.html", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records)
+
+
+@app.route("/export_time_csv_file", methods=['GET'])
+@login_required
+def export_time_csv_file():
+    file_content = time_keeper_dao.export_time_to_csv(current_user.get_id())
+    response = make_response(file_content)
+    response.headers['Content-Disposition'] = "attachment; filename=cronus.csv"
+    return response

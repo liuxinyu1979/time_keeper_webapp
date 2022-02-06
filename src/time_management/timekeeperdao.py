@@ -24,12 +24,26 @@ class TimeKeeperDao:
         self.time_db_tracker_imports = None
         self.time_db_tracker_admin = None
 
+        self.TIME_FILE_HEADER = "date time,action,minute"
+
         self.WEEKEND_REWARD_CONS_MINUTES = 35 # a one-off 35 minutes reward on Friday/Saturday/Sunday
         self.INIT_RECORD_TABLE_PAYLOAD = {"user":self.test_acc, "datetime":datetime.fromtimestamp(0), 'minutesUsed':[], 'minutesAdded':[self.WEEKEND_REWARD_CONS_MINUTES]}
         self.INIT_ADMIN_TABLE_PAYLOAD = {"user":self.test_acc, "datetime":datetime.fromtimestamp(0), 'action':AdminAction.Unpause.name, 'is_success':False}
         self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
+
+    def export_time_to_csv(self, user):
+        content = self.TIME_FILE_HEADER
+        records = self.time_db_tracker_records.find({'user':user})
+        for doc in records:
+            dt = doc['datetime'].strftime('%Y-%m-%d')
+            if 'minutesAdded' in doc:
+                content += f"\n{dt},topup,{sum(doc['minutesAdded'])}"
+            if 'minutesUsed' in doc:
+                content += f"\n{dt},used,{sum(doc['minutesUsed'])}"
+
+        return content
 
     def document_count(self, user):
         return self.time_db_tracker_records.count_documents({'user':user})
@@ -138,7 +152,7 @@ class TimeKeeperDao:
         with open(time_keeper_file, "r") as in_file:
             # first line is to remove the header
             line = in_file.readline()
-            if line.strip() != "date time,action,minute":
+            if line.strip() != self.TIME_FILE_HEADER:
                 return False
             line = in_file.readline()
             while line != None and line != '' and line != '\n':
