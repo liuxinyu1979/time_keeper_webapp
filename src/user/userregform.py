@@ -26,3 +26,16 @@ class UserLoginForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired()])
 
     submit = SubmitField('Login')
+
+
+class AccountInfoForm(FlaskForm):
+    user_name = StringField("User Name")
+    email = StringField('Email', validators=[InputRequired(), Email()])
+
+    submit = SubmitField('Update')
+
+class AccountSecretForm(FlaskForm):
+    user_name = StringField("User Name")
+    password = PasswordField('Password', validators=[InputRequired()])
+    password2 = PasswordField('Repeat Password', validators=[InputRequired(), EqualTo('password', message="password must match")])
+    submit = SubmitField('Update')

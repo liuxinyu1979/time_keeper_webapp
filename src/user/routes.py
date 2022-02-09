@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request,jsonify
 from user.user import User
-from user.userregform import UserRegistrationForm, UserLoginForm
+from user.userregform import UserRegistrationForm, UserLoginForm, AccountInfoForm, AccountSecretForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
 
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 
 login_manager = LoginManager()
@@ -19,6 +19,8 @@ class UserAccount(UserMixin):
         self.email = user['email']
         self.passwd = user['password']
 
+    def get_email(self):
+        return self.email
     def is_authenticated(self):
         return True
 
@@ -84,6 +86,64 @@ def login():
 def logout():
     logout_user()
     return render_template("index.html")
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def account_profile():
+    account_info_form = AccountInfoForm()
+    user_name = current_user.get_id()
+    account_info_form.user_name.data = user_name
+    usr =  account_mgmt.get_user(user_name)
+    acc = UserAccount(usr)
+
+
+    if request.method == 'GET':
+        account_info_form.email.data = acc.get_email() 
+        render_template("updateprofile.html", account_info_form=account_info_form)
+
+    if request.method == 'POST':
+        if account_info_form.validate():
+            email = account_info_form.email.data
+            status, err = account_mgmt.update_account_info(user_name, email)
+            if status == False:
+                account_info_form.user_name.errors.append(err["error"])
+            else:
+                account_info_form.user_name.errors.append("account info update successful")
+            return render_template("updateprofile.html",account_info_form=account_info_form)
+        
+    return render_template("updateprofile.html", account_info_form=account_info_form)
+
+@app.route('/secret', methods=['GET', 'POST'])
+@login_required
+def account_secret():
+    account_sec_form = AccountSecretForm()
+    user_name = current_user.get_id()
+    account_sec_form.user_name.data = user_name
+    usr =  account_mgmt.get_user(user_name)
+    acc = UserAccount(usr)
+
+    if request.method == 'GET':
+        account_sec_form.password.data = ""
+        account_sec_form.password2.data = ""
+        render_template("updatesecret.html", account_secret_form=account_sec_form)
+
+    if request.method == 'POST':
+        if account_sec_form.validate():
+            password_hashed = generate_password_hash(account_sec_form.password.data)
+            status, err = account_mgmt.update_account_secret(user_name, password_hashed)
+            if status == False:
+                account_sec_form.user_name.errors.append(err["error"])
+            else:
+                account_sec_form.user_name.errors.append("account secret update successful")
+            return render_template("updatesecret.html",account_secret_form=account_sec_form)
+        
+    return render_template("updatesecret.html", account_secret_form=account_sec_form)
+
+
+
+
+
 
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()

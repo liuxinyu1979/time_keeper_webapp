@@ -53,4 +53,18 @@ class User():
         acc_in_db = self.time_db_tracker_accounts.find_one({'name':acc_name}) 
         return acc_in_db
 
-    
+    def update_account_info(self, acc_name, email):
+        time_now = datetime.now()
+        if not self.acc_name_exist(acc_name):
+            return False, {"error":"account does not exist"}
+
+        self.time_db_tracker_accounts.update_one({"name":acc_name}, {'$set': {'email':email, "updated_on":time_now}}, upsert=True)
+        return True, {}
+
+    def update_account_secret(self, acc_name, password):
+        time_now = datetime.now()
+        if not self.acc_name_exist(acc_name):
+            return False, {"error":"account does not exist"}
+
+        self.time_db_tracker_accounts.update_one({"name":acc_name}, {'$set': {'password':password, "updated_on":time_now}}, upsert=True)
+        return True, {}
