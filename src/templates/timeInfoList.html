@@ -4,6 +4,17 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row-fluid mx-auto w-75">
+        <table class="table table-bordered table-active" >
+
+            <div class="d-flex justify-content-between ">
+                <tr>
+                    <td>Total remaining time: {{remain}}</td>
+                    <td>Total topup time: {{topup}}</td>
+                    <td>Total used time: {{used}}</td>
+                </tr>
+
+            </div>
+        </table>
 
         <table class="table table-bordered" >
             <thead style="background-color: darkgray; text-align: center; color: white;">

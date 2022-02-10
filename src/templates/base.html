@@ -15,7 +15,9 @@
         <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
         <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
     </head>
-
+<style>.border-3 {
+    border-width:3px !important;
+}</style>
     <body>
         <!-- jQuery CDN - Slim version (=without AJAX) -->
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -27,7 +29,7 @@
 
         <!-- https://getbootstrap.com/docs/4.1/layout/grid/ has 12 columns in the grid system -->
         <div class="container-fluid h-100">
-            <div class="row h-100">
+            <div class="row h-100" >
                 <div class="col-2" >
             
                     <nav id="sidebar">
@@ -35,45 +37,47 @@
                             <h3>Au4Tech</h3>
                         </div>
                         <blockquote class="blockquote">
-                        <ul class="list-unstyled components">
-                            <br/>
-                            <br/>
+                            <ul class="list-unstyled components">
+                                <br/>
+                                <br/>
 
-                            <li class="active">
-                                <a href="#TimeManagement" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Time Management</a>
-                                <ul class="collapse list-unstyled" id="TimeManagement">
-                                    <li>
-                                        <a href="{{ url_for('upload_time_file') }}">Upload time file</a>
-                                    </li>
-                                    <li>
-                                       <a href="{{ url_for('specify_time') }}">Input Time Info</a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ url_for('list_time_info') }}">View Time Info</a>
-                                     </li>                                    
-                                </ul>
-                            </li>
+                                <li class="active">
+                                    <a href="#TimeManagement" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Time Management</a>
+                                    <ul class="collapse list-unstyled" id="TimeManagement">
+                                        <li>
+                                            <a href="{{ url_for('upload_time_file') }}">Upload time file</a>
+                                        </li>
+                                        <li>
+                                        <a href="{{ url_for('specify_time') }}">Input Time Info</a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ url_for('list_time_info') }}">View Time Info</a>
+                                        </li>                                    
+                                    </ul>
+                                </li>
 
-                            <li>
-                                <a href="#graphs" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Graphs</a>
-                                <ul class="collapse list-unstyled" id="graphs">
-                                    <li>
-                                        <a href="{{ url_for('show_admin_graphs') }}">Admin Graphs</a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ url_for('show_time_bucket_graphs') }}">Time Graphs</a>
-                                    </li>
-                                </ul>
-                            </li>
+                                <li>
+                                    <a href="#graphs" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Graphs</a>
+                                    <ul class="collapse list-unstyled" id="graphs">
+                                        <li>
+                                            <a href="{{ url_for('show_admin_graphs') }}">Admin Graphs</a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ url_for('show_time_bucket_graphs') }}">Time Graphs</a>
+                                        </li>
+                                    </ul>
+                                </li>
 
-                        </ul></blockquote>
+                            </ul>
+                        </blockquote>
                     </nav>
                 </div>
+
                 <div class="col-10" style="text-align: center;">
                     <br/>
                     <br/>
                     <br/>
-                    <div class="main col py-3">
+                    <div class="main col py-3 border-left border-3">
                         <div id="content">{% block content %}{% endblock %}</div>   
                     </div>            
                     <br/>

@@ -45,7 +45,7 @@ class TimeKeeperDao:
 
         return content
 
-    def document_count(self, user):
+    def  document_count(self, user):
         return self.time_db_tracker_records.count_documents({'user':user})
 
     # page_num starts from 1, not 0
@@ -59,7 +59,10 @@ class TimeKeeperDao:
         records = self.time_db_tracker_records.find({'user':user}).skip((page_num-1)*per_page_limit).limit(per_page_limit)
         return records
 
-
+    def get_user_time_info(self, user):
+        if user not in self.users:
+            return -1, -1, -1
+        return self.remaining_minutes[user], self.topup_minutes[user], self.used_minutes[user]
 
     def minutes_toppedup(self, user):
         return self.topup_minutes[user]

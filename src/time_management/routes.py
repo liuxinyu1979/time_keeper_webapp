@@ -7,6 +7,8 @@ from time_management.timeform import TimeForm
 from flask_httpauth import HTTPBasicAuth
 from flask_paginate import Pagination, get_page_parameter
 
+from user.user import User
+
 
 auth = HTTPBasicAuth()
 
@@ -191,7 +193,9 @@ def list_time_info():
     pagination = Pagination(bs_version = 4, page=page, total=total_count, search=search, record_name='Time Info List')
     per_page_limit = 10
     time_records = time_keeper_dao.find_documents_by_page(user_name, page, per_page_limit)
-    return render_template("timeInfoList.html", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records)
+    remain, topup, used = time_keeper_dao.get_user_time_info(user_name)
+    print(remain, topup, used)
+    return render_template("timeInfoList.html", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records, remain=remain, topup=topup, used=used)
 
 
 @app.route("/export_time_csv_file", methods=['GET'])
