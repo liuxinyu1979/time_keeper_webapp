@@ -2,6 +2,13 @@
 {% block title %}Time Info List{% endblock %}
 
 {% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">Time Management</li>
+      <li class="breadcrumb-item active" aria-current="page">{{graph_url_name}}</li>
+    </ol>
+  </nav>
+
 <div class="container-fluid">
     <div class="row-fluid mx-auto w-75">
         <table class="table table-bordered table-active" >

@@ -176,12 +176,12 @@ def specify_time():
         time_keeper_dao.record_time_and_log(input_action, input_minutes, user_name)
         remaining_time = time_keeper_dao.minutes_left(user_name)
 
-        return render_template("timeManagementResult.html",file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
+        return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
 
     if time_upload_form.validate_on_submit():
         time_upload_form.minutes_field.data= 1
 
-    return render_template("uploadtime.html", time_upload_form = time_upload_form)
+    return render_template("uploadtime.html", graph_url_name="Input time info", time_upload_form = time_upload_form)
 
 @app.route('/list_time_info', methods=['GET'])
 @login_required
@@ -195,7 +195,7 @@ def list_time_info():
     time_records = time_keeper_dao.find_documents_by_page(user_name, page, per_page_limit)
     remain, topup, used = time_keeper_dao.get_user_time_info(user_name)
     print(remain, topup, used)
-    return render_template("timeInfoList.html", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records, remain=remain, topup=topup, used=used)
+    return render_template("timeInfoList.html", graph_url_name="View time info", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records, remain=remain, topup=topup, used=used)
 
 
 @app.route("/export_time_csv_file", methods=['GET'])

@@ -2,6 +2,14 @@
 {% block title %}Graphs{% endblock %}
 
 {% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">Graphs</li>
+      <li class="breadcrumb-item active" aria-current="page">{{graph_url_name}}</li>
+    </ol>
+  </nav>
+
+
 <div class="container-fluid">
     <div class="row-fluid mt-md-n5">
         {% for r in admin_action_graphs  | batch( cols, '&nbsp;') %}

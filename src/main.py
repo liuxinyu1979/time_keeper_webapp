@@ -66,9 +66,9 @@ def upload_time_file():
             time_file_upload_success = time_keeper_dao.update_db_by_import(tmp_file, user)
             
         remaining_time = time_keeper_dao.minutes_left(user)
-        return render_template("timeManagementResult.html", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
+        return render_template("timeManagementResult.html", graph_url_name="Upload time file result", file_name=upload_file_name, time_file_upload_success=time_file_upload_success, remaining_time=remaining_time)
 
-    return render_template('timeFileUpload.html')
+    return render_template('timeFileUpload.html', graph_url_name="Upload time file")
 
 
 @app.route('/show_admin_graphs', methods=['GET'])
@@ -80,7 +80,7 @@ def show_admin_graphs():
     action_imgs.append(plotgraphs.heatmap_plot_img(date_range, success_flags, success_flags_hit_count, "Admin password attempt heatmap"))
     action_imgs.append(plotgraphs.heatmap_plot_img(date_range, action_names, actions_hit_count, "Admin actions heatmap"))
     # display two images in one row in full screen
-    return render_template("graphs.html", admin_action_graphs=action_imgs, graph_count=len(action_imgs), cols = 2)
+    return render_template("graphs.html", graph_url_name="Admin graphs", admin_action_graphs=action_imgs, graph_count=len(action_imgs), cols = 2)
 
 
 @app.route('/show_time_bucket_graphs', methods=['GET'])
@@ -95,7 +95,7 @@ def show_time_bucket_graphs():
     time_bucket_imgs.append(plotgraphs.time_bucket_bar_plot_img(date_range, added, 'added minutes', "Added minutes per day", 'minutes added'))
     time_bucket_imgs.append(plotgraphs.heatmap_plot_img(hrs, ampm, hit_count, "Admin actions heatmap"))
     # display two images in one row in full screen
-    return render_template("graphs.html", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
+    return render_template("graphs.html", graph_url_name="Time graphs", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
 
 
 
