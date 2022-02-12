@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
-<!-- home page for Cronus's Harpe, Charpe.io -->
+<!-- home page for QooQoo, QooQoo.io -->
 {% block content %}
 
 {% if current_user.is_authenticated %}
 
-	<h1>Welcome to Cronus {{ current_user.name }}</h1>
+	<h1>{{ current_user.name }}, welcome back to QooQoo</h1>
 {% else %}
 
-	<h1>Welcome to Cronus</h1>
+	<h1>Welcome to QooQoo</h1>
 {%- endif %}
 
-<p>Cronus is an app that does time keeping. </p>
-<p>In other words, it allows the following</p>
-<ul>
-    <p>upload time you earned</p>
-    <p>deduct time you used</p>
-    <p>monitor the time usage</p>
-</ul>
+<p>Many children look at computer screen for a long time each day without parents knowing. </p>
+<p>QooQoo is here to help. QooQoo allows parents to monitor how much time and when </p>
+<p>children are watching screen. In addition, kids can topup screen time on the app. Such screentime can </p>
+<p>be awarded by doing homework or house work. When screen time is used up, the wifi is gone. </p>
+<p>As parents, you can monitor kids screen time pattern on graphs</p>
+<br/>
+<br/>
+<br/>
 <div class="container">
 	<div class="d-flex justify-content-center h-100">
 		<div class="card" style="width: 36rem;">
@@ -38,6 +39,9 @@
 				<div class="d-flex justify-content-end social_icon">
 				</div>
 			</div>
+			<br/>
+			<br/>
+			<br/>
 			<div class="card-body">
                 <img class="card-img-top" src="static/images/admin_action_example.png" alt="TimeUsedExample">
                 This is an example of admin action graph
