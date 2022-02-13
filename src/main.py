@@ -97,6 +97,11 @@ def show_time_bucket_graphs():
     # display two images in one row in full screen
     return render_template("graphs.html", graph_url_name="Time graphs", admin_action_graphs=time_bucket_imgs, graph_count=len(time_bucket_imgs), cols = 2)
 
+@app.route('/about.QooQoo', methods=['GET'])
+@login_required
+def about_page():
+
+    return render_template("about.html")
 
 
 '''
