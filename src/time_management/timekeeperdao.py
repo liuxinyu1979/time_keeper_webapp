@@ -8,7 +8,7 @@ AdminAction = Enum('AdminAction', 'Pause Unpause wifion')
 TimeAction = Enum('TimeAction', 'used topup')
 
 class TimeKeeperDao:
-    def __init__(self, app):
+    def __init__(self, mongo_client):
         self.test_acc = "test_no_name"
         self.users = {self.test_acc}
         self.remaining_minutes = {}
@@ -17,9 +17,8 @@ class TimeKeeperDao:
         # todo: deal with the user based import
         self.input_lines = set()
 
-        self.time_keeper_db_name = "testtimedb"
+        self.mongo = mongo_client
 
-        self.mongo = PyMongo(app)
         self.time_db_tracker_records = None
         self.time_db_tracker_imports = None
         self.time_db_tracker_admin = None

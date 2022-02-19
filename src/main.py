@@ -1,7 +1,8 @@
-from datetime import timedelta
+
 from time import time
 from flask import Flask, current_app, render_template,jsonify, request
-# from timekeeperdao_ import TimeKeeperDao
+from src import create_app
+
 from time_management.timekeeperdao import TimeKeeperDao
 from user.user import User
 
@@ -10,19 +11,10 @@ from flask_pymongo import PyMongo
 import plotgraphs
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
-app.config.from_object(DevConfig)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/testtimedb"
-app.config["MONGODB_CONNECTION_TIMEOUT_MS"] = 100
-# python -c 'import secrets; print(secrets.token_hex())'
-app.config["SECRET_KEY"] = "my secret key"
-# maximum file size 20MB
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 20
-app.config['UPLOAD_EXTENSIONS'] = ['.csv']
-# relogin after 30 minutes
-app.permanent_session_lifetime = timedelta(minutes=30)
-time_keeper_dao = TimeKeeperDao(app)
-account_mgmt = User(app=app, time_keeper_dao=time_keeper_dao)
+app, mongo_client = create_app(None)
+
+time_keeper_dao = TimeKeeperDao(mongo_client)
+account_mgmt = User(mongo_client=mongo_client, time_keeper_dao=time_keeper_dao)
 
 # the routes module is going to import the flask app object, so keep the import below app = Flask...
 from user import routes

@@ -7,8 +7,8 @@ from bson.objectid import ObjectId
 
 class User():
 
-    def __init__(self, app, time_keeper_dao):
-        self.mongo = PyMongo(app)
+    def __init__(self, mongo_client, time_keeper_dao):
+        self.mongo = mongo_client
         self.time_db_tracker_accounts = self.mongo.db.accounts
         self.time_keeper_dao = time_keeper_dao
 
