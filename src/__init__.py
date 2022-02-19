@@ -7,7 +7,7 @@ from flask_pymongo import PyMongo
 def create_app(test_config=None):
     # create and configure the app
     qooqoo_app = Flask(__name__)
-
+    mongo_client = None
     if test_config is None:
         # load the instance config, if it exists, when not testing
         qooqoo_app.config.from_object(DevConfig)
@@ -25,5 +25,5 @@ def create_app(test_config=None):
     else:
         # load the test config if passed in
         qooqoo_app.config.from_mapping(test_config)
-
+        mongo_client = "test_mongo_client"
     return qooqoo_app, mongo_client
