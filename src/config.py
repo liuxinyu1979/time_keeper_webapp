@@ -8,6 +8,7 @@ class ProdConfig(Config):
 
 class DevConfig(Config):
     time_keeper_db_name = "testtimedb"
+    # time_keeper_db_name = "timedb"
     MONGO_URI = f"mongodb://localhost:27017/{time_keeper_db_name}"
     MONGODB_CONNECTION_TIMEOUT_MS = 100
     # python -c 'import secrets; print(secrets.token_hex())'

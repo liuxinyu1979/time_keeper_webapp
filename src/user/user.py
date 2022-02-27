@@ -12,14 +12,6 @@ class User():
         self.time_db_tracker_accounts = self.mongo.db.accounts
         self.time_keeper_dao = time_keeper_dao
 
-        try:
-            cx = self.mongo.cx.server_info()
-            db = self.mongo.db
-
-        except:
-            print("Log: mongo db doesn't exist")
-            return False
-
         self.INIT_ACCOUNTS_TABLE_PAYLOAD = {"name": "test","email": "test@au4tech.com","password": "", "created_on":datetime.fromtimestamp(0), "updated_on":datetime.fromtimestamp(0)}
         collection_names= set(self.mongo.db.list_collection_names())
         if "accounts" not in collection_names:

@@ -1,5 +1,5 @@
 import flask_pymongo
-from flask_pymongo import PyMongo
+# from flask_pymongo import PyMongo
 from datetime import datetime, timedelta
 
 from enum import Enum
@@ -31,6 +31,71 @@ class TimeKeeperDao:
         self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
+
+    def init_with_db(self):
+        self.time_db_tracker_records = self.get_records_collection()
+        self.time_db_tracker_imports = self.get_imports_collection()
+        self.time_db_tracker_admin = self.get_admin_collection()
+
+        collection_names= set(self.mongo.db.list_collection_names())
+
+        if "records" not in collection_names and ("admin" in collection_names or "imports" in collection_names):
+            return False
+
+        record_cnt = 0
+        for doc in self.time_db_tracker_records.find():
+            record_cnt += 1
+            user_name = self.test_acc
+            if "user" in doc:
+                user_name = doc['user']
+            if user_name not in self.users:
+                self.users.add(user_name)
+                self.topup_minutes[user_name] = 0
+                self.used_minutes[user_name] = 0
+                self.remaining_minutes[user_name] = 0
+
+            if 'minutesUsed' in doc:
+                if user_name in self.used_minutes:
+                    self.used_minutes[user_name] += sum(doc['minutesUsed'])
+                else:
+                    self.used_minutes[user_name] = sum(doc['minutesUsed'])
+
+            if 'minutesAdded' in doc:
+                if user_name in self.topup_minutes:
+                    self.topup_minutes[user_name] += sum(doc['minutesAdded'])
+                else:
+                    self.topup_minutes[user_name] = sum(doc['minutesAdded'])
+
+        # if the table doesn't exist, initialize it with some number of minutes
+        if record_cnt == 0:
+            self.time_db_tracker_records.insert_one(self.INIT_RECORD_TABLE_PAYLOAD)
+            self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
+            self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
+            self.topup_minutes  = self.WEEKEND_REWARD_CONS_MINUTES
+
+            self.time_db_tracker_records.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
+            self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
+
+        # add collection on the fly if database and some collections already exist
+        if "admin" not in collection_names:
+            self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
+            self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
+        if "imports" not in collection_names:
+            self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
+        
+        for u_name in self.users:
+            topup_minutes = 0
+            if u_name in self.topup_minutes:
+                topup_minutes = self.topup_minutes[u_name]
+
+            used_minutes = 0
+            if u_name in self.used_minutes:
+                used_minutes = self.used_minutes[u_name]
+
+            self.remaining_minutes[u_name] = topup_minutes - used_minutes
+
+        return True
+
 
     def export_time_to_csv(self, user):
         content = self.TIME_FILE_HEADER
@@ -194,77 +259,14 @@ class TimeKeeperDao:
         print(user, logline)
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
 
+    def get_records_collection(self):
+        return self.mongo.db.records
 
-    def init_with_db(self):
-
-        try:
-            cx = self.mongo.cx.server_info()
-            db = self.mongo.db
-
-        except:
-            print("Log: mongo db doesn't exist")
-            return False
-        
-        self.time_db_tracker_records = self.mongo.db.records
-        self.time_db_tracker_imports = self.mongo.db.imports
-        self.time_db_tracker_admin = self.mongo.db.admin
-
-        collection_names= set(self.mongo.db.list_collection_names())
-
-        record_cnt = 0
-        for doc in self.time_db_tracker_records.find():
-            record_cnt += 1
-            user_name = self.test_acc
-            if "user" in doc:
-                user_name = doc['user']
-            if user_name not in self.users:
-                self.users.add(user_name)
-                self.topup_minutes[user_name] = 0
-                self.used_minutes[user_name] = 0
-                self.remaining_minutes[user_name] = 0
-
-            if 'minutesUsed' in doc:
-                if user_name in self.used_minutes:
-                    self.used_minutes[user_name] += sum(doc['minutesUsed'])
-                else:
-                    self.used_minutes[user_name] = sum(doc['minutesUsed'])
-
-            if 'minutesAdded' in doc:
-                if user_name in self.topup_minutes:
-                    self.topup_minutes[user_name] += sum(doc['minutesAdded'])
-                else:
-                    self.topup_minutes[user_name] = sum(doc['minutesAdded'])
-
-        # if the table doesn't exist, initialize it with some number of minutes
-        if record_cnt == 0:
-            self.time_db_tracker_records.insert_one(self.INIT_RECORD_TABLE_PAYLOAD)
-            self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
-            self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
-            self.topup_minutes  = self.WEEKEND_REWARD_CONS_MINUTES
-
-            self.time_db_tracker_records.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
-            self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
-
-        # add collection on the fly if database and some collections already exist
-        if "admin" not in collection_names:
-            self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
-            self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
-        if "imports" not in collection_names:
-            self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
-        
-        for u_name in self.users:
-            topup_minutes = 0
-            if u_name in self.topup_minutes:
-                topup_minutes = self.topup_minutes[u_name]
-
-            used_minutes = 0
-            if u_name in self.used_minutes:
-                used_minutes = self.used_minutes[u_name]
-
-            self.remaining_minutes[u_name] = topup_minutes - used_minutes
-
-        return True
-
+    def get_imports_collection(self):
+        return self.mongo.db.imports
+    
+    def get_admin_collection(self):
+        return self.mongo.db.admin
 
     def retrieve_admin_stat(self, user_name):
 

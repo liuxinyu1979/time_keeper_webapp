@@ -19,11 +19,12 @@ def create_app(test_config=None):
 
         except:
             print("Log: mongo db doesn't exist")
-            return False
+            return None, None
 
 
     else:
         # load the test config if passed in
         qooqoo_app.config.from_mapping(test_config)
-        mongo_client = "test_mongo_client"
+        mongo_client = PyMongo(qooqoo_app)
+
     return qooqoo_app, mongo_client

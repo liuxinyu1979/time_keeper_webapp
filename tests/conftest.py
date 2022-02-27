@@ -4,6 +4,6 @@ from src.config import TestingConfig
 
 @pytest.fixture
 def app_db(mocker):
-    app, db = create_app({'TESTING':True})
+    app, db = create_app({'TESTING':True, 'MONGO_URI' : f"mongodb://localhost:27017/unittest"})
     return app, db, mocker
 

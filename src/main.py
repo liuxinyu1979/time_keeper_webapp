@@ -12,7 +12,11 @@ import plotgraphs
 from werkzeug.utils import secure_filename
 
 app, mongo_client = create_app(None)
+if app == None:
+    print("Log: unable to create application or mongo connection, exiting")
+    exit()
 
+# Must create time_keeper_do before account_mgmt because time_keeper_dao makes sure records db exists. 
 time_keeper_dao = TimeKeeperDao(mongo_client)
 account_mgmt = User(mongo_client=mongo_client, time_keeper_dao=time_keeper_dao)
 
