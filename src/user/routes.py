@@ -4,34 +4,12 @@ from user.userregform import UserRegistrationForm, UserLoginForm, AccountInfoFor
 from werkzeug.security import generate_password_hash, check_password_hash
 from main import app, account_mgmt, time_keeper_dao
 
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from user.useraccount import UserAccount
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
-
-class UserAccount(UserMixin):
-
-    def __init__(self, user):
-
-        self.name = user['name']
-        self.email = user['email']
-        self.passwd = user['password']
-
-    def get_email(self):
-        return self.email
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):   
-        return True           
-
-    def is_anonymous(self):
-        return False          
-
-    def get_id(self):         
-        return self.name
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -1,4 +1,4 @@
-from user.routes import UserAccount
+from user.useraccount import UserAccount
 
 def test_creation_successful():
     a_user = {'name':'a', 'email':'b', 'password':'c'}
