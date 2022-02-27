@@ -65,8 +65,6 @@ def test_fail_create_timekeeperdao_with_only_imports_collection(app_db):
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     assert tkd.db_exist == False
 
-
-# test missing imports collection
 def test_successful_create_timekeeperdao_when_missing_imports_collections(app_db):
     app, mongo_client, mocker = app_db
 
@@ -81,7 +79,7 @@ def test_successful_create_timekeeperdao_when_missing_imports_collections(app_db
     mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
     mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    # imp_spy = mocker.spy('mongomock.MongoClient.db.imports', "insert_one")
+    imp_spy = mocker.spy(import_collection, "insert_one")
     tkd = TimeKeeperDao(mongo_client=mongo_client)
 
     assert tkd.db_exist == True
@@ -89,4 +87,4 @@ def test_successful_create_timekeeperdao_when_missing_imports_collections(app_db
     assert tkd.remaining_minutes == {"test_no_name":0, "test":35}
     assert tkd.topup_minutes == {"test":35}
     assert tkd.used_minutes == {"test":0}
-    # assert imp_spy.call_count == 1
+    assert imp_spy.call_count == 1
