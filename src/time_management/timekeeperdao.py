@@ -109,7 +109,7 @@ class TimeKeeperDao:
 
         return content
 
-    def  document_count(self, user):
+    def document_count(self, user):
         return self.time_db_tracker_records.count_documents({'user':user})
 
     # page_num starts from 1, not 0
