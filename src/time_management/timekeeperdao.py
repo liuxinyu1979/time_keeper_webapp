@@ -116,7 +116,7 @@ class TimeKeeperDao:
     def find_documents_by_page(self, user, page_num, per_page_limit):
         if user not in self.users or page_num <= 0  or per_page_limit <= 0:
             return None
-        print(user, page_num, per_page_limit)
+
         # find all the records from a user sorted ascending
         # skip to the right page, eg: if page_num is 1, then we start from document 1
         # if page_num is 2 and per_page_limit is 10, then we start from 10
@@ -246,17 +246,17 @@ class TimeKeeperDao:
         v = self.time_db_tracker_admin.find_one()
         return v
 
-    def record_time_and_log(self, input_action, input_minutes, user):
+    def record_time_and_logline(self, input_action, input_minutes, user):
         dt = datetime.today().strftime('%Y-%m-%d')
         logline = f"{dt},{input_action},{input_minutes}"
         
-        print(user, input_minutes)
+        # print(user, input_minutes)
 
         if input_action == TimeAction.topup.name:
             self.topup_minutes_in_db(input_minutes, user)
         elif input_action == TimeAction.used.name:
             self.update_minutes_used_in_db(input_minutes, user)
-        print(user, logline)
+        # print(user, logline)
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
 
     def get_records_collection(self):

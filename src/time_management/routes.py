@@ -173,7 +173,7 @@ def specify_time():
         user_name = current_user.get_id()
         input_minutes = time_upload_form.minutes_field.data
         input_action = time_upload_form.action_field.data
-        time_keeper_dao.record_time_and_log(input_action, input_minutes, user_name)
+        time_keeper_dao.record_time_and_logline(input_action, input_minutes, user_name)
         remaining_time = time_keeper_dao.minutes_left(user_name)
 
         return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
@@ -194,7 +194,7 @@ def list_time_info():
     per_page_limit = 10
     time_records = time_keeper_dao.find_documents_by_page(user_name, page, per_page_limit)
     remain, topup, used = time_keeper_dao.get_user_time_info(user_name)
-    print(remain, topup, used)
+    # print(remain, topup, used)
     return render_template("timeInfoList.html", graph_url_name="View time info", page=page, per_page=per_page_limit, pagination=pagination, time_records=time_records, remain=remain, topup=topup, used=used)
 
 
