@@ -156,9 +156,6 @@ class TimeKeeperDao:
         self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
         return True, ""
 
-    '''
-    unit tested above
-    '''
     def record_minutes_added(self, number_of_minutes, user):
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
@@ -182,6 +179,9 @@ class TimeKeeperDao:
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
 
+    '''
+    unit tested above
+    '''
     def get_minutes_in_db(self, user, queried_date_time):
         if user not in self.users:
             return {}, "user {user} is not valid"
