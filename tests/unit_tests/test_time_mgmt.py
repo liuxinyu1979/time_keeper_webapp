@@ -1,5 +1,5 @@
 from flask_pymongo import PyMongo
-from time_management.timekeeperdao import TimeKeeperDao
+from time_management.timekeeperdao import TimeKeeperDao, AdminAction
 import mongomock
 from datetime import datetime
 
@@ -228,3 +228,32 @@ def test_failed_get_user_time_info(app_db):
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     remain_min, topup_min, used_min = tkd.get_user_time_info("test_acc_nonexist")
     assert remain_min == -1 and topup_min == -1 and used_min == -1
+
+def test_success_record_admin_action(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    for aa in AdminAction:
+        ret, err = tkd.record_admin_action(aa.name, True, "test")
+        admin_action = tkd.admin_action_get_one()
+        assert ret == True and err == "" and admin_action['is_success'] == True and admin_action['action'] == aa.name
+        admin_collection.find_one_and_delete({'_id':admin_action['_id']})
+
+
+def test_failed_record_admin_action(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    ret, err = tkd.record_admin_action("invalid_admin_action", True, "test")
+    assert ret == False and err == "Unrecognized admin action"
+

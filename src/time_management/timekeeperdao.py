@@ -136,12 +136,29 @@ class TimeKeeperDao:
     def minutes_left(self, user):
         return self.remaining_minutes[user]
 
+    def get_records_collection(self):
+        return self.mongo.db.records
+
+    def get_imports_collection(self):
+        return self.mongo.db.imports
+    
+    def get_admin_collection(self):
+        return self.mongo.db.admin
+
+    # this is for testing only
+    def admin_action_get_one(self):
+        v = self.time_db_tracker_admin.find_one()
+        return v
+
     def record_admin_action(self, admin_action, is_successful, user):
         if admin_action not in set([v.name for v in AdminAction]):
             return False, "Unrecognized admin action"
         self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
         return True, ""
 
+    '''
+    unit tested above
+    '''
     def record_minutes_added(self, number_of_minutes, user):
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
@@ -241,11 +258,6 @@ class TimeKeeperDao:
         
         return True
 
-
-    def admin_action_get_one(self):
-        v = self.time_db_tracker_admin.find_one()
-        return v
-
     def record_time_and_logline(self, input_action, input_minutes, user):
         dt = datetime.today().strftime('%Y-%m-%d')
         logline = f"{dt},{input_action},{input_minutes}"
@@ -258,15 +270,6 @@ class TimeKeeperDao:
             self.update_minutes_used_in_db(input_minutes, user)
         # print(user, logline)
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
-
-    def get_records_collection(self):
-        return self.mongo.db.records
-
-    def get_imports_collection(self):
-        return self.mongo.db.imports
-    
-    def get_admin_collection(self):
-        return self.mongo.db.admin
 
     def retrieve_admin_stat(self, user_name):
 
