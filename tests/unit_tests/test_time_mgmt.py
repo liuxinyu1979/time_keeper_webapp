@@ -309,3 +309,31 @@ def test_fail_record_minutes_used(app_db):
 
     ret, err = tkd.record_minutes_added(5, "test_acc_nonexist")
     assert ret == {} and len(err) > 0
+
+def test_success_get_minutes_in_db(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+
+    records, err = tkd.get_minutes_in_db("test", "1970-11-24T00:00:00.000+00:0")
+    assert err == "" and records == None
+
+    records, err = tkd.get_minutes_in_db("test", "2021-11-24T00:00:00.000+00:0")
+    assert err == "" and records['minutesAdded'] == [35]
+
+def test_fail_get_minutes_in_db(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    records, err = tkd.get_minutes_in_db("test_acc_nonexist", "1970-11-24T00:00:00.000+00:0")
+    assert records == {} and len(err) > 0
