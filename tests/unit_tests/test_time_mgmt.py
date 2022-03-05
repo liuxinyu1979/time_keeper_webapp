@@ -1,5 +1,5 @@
 from flask_pymongo import PyMongo
-from time_management.timekeeperdao import TimeKeeperDao, AdminAction
+from time_management.timekeeperdao import TimeKeeperDao, AdminAction, TimeAction
 import mongomock
 from datetime import datetime
 
@@ -338,3 +338,26 @@ def test_fail_get_minutes_in_db(app_db):
     records, err = tkd.get_minutes_in_db("test_acc_nonexist", "1970-11-24T00:00:00.000+00:0")
     assert records == {} and len(err) > 0
 
+def test_success_record_time_and_logline(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    record, err = tkd.record_time_and_logline(TimeAction.topup.name, 10, "test")
+    assert record["remaining_minutes"] == 45 and err == ""
+    record, err = tkd.record_time_and_logline(TimeAction.used.name, 10, "test")
+    assert record["remaining_minutes"] == 35 and err == ""
+
+    # If we run this test in midnight, then there is a slight chance the dt recorded in record_time_and_logline method 
+    # is the day x and dt here is the next day
+    dt = datetime.today().strftime('%Y-%m-%d')
+    import_collection_gt = [f"{dt},{TimeAction.topup.name},10", f"{dt},{TimeAction.used.name},10"]
+    cursor = import_collection.find({})
+    vals = []
+    for c in cursor:
+        vals.append(c["logline"])
+    assert import_collection_gt == vals

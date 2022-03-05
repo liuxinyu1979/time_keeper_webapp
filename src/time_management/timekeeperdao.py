@@ -188,57 +188,10 @@ class TimeKeeperDao:
     '''
     unit tested above
     '''
-    def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
-        if user in self.users:
-            return
-        self.users.add(user)
-        self.topup_minutes[user] = 0
-        self.used_minutes[user] = 0
-
-        if topup_minutes > 0:
-            self.record_minutes_added(topup_minutes,user)
-        if used_minutes > 0:
-            self.record_minutes_used(used_minutes,user)
-
-    
-    # imports time added and used to databases. 
-    # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
-    # this is because kids often save up a bunch of topup and used records, and when we upload time, we want to see them on the 
-    # graphs right away, so we record the time towards today
-    # TODO: obviously this method needs to be tested a lot more
-    def update_db_by_import(self, time_keeper_file, user):
-        if user not in self.users:
-            self.init_time_vals_for_user(user, 0, 35)
-
-        # The file format is 
-        # date time,action,minute
-        # 2022-01-17,topup,999
-        with open(time_keeper_file, "r") as in_file:
-            # first line is to remove the header
-            line = in_file.readline()
-            if line.strip() != self.TIME_FILE_HEADER:
-                return False
-            line = in_file.readline()
-            while line != None and line != '' and line != '\n':
-
-                log = line.strip().replace(' ','').split(',')
-                if len(log) != 3:
-                    return False
-                log_line = ",".join(log)
-                # if the logline already exists in db, ignore it. 
-                if self.time_db_tracker_imports.find_one({'user':user, 'logline': log_line}) == None:
-                    self.time_db_tracker_imports.insert_one({'user':user,'logline': log_line})
-                    v = int(log[2])
-                    if log[1] == TimeAction.topup.name:
-                        self.record_minutes_added(v, user)
-                    elif log[1] == TimeAction.used.name:
-                        self.record_minutes_used(v, user)
-
-                line = in_file.readline()
-        
-        return True
-
     def record_time_and_logline(self, input_action, input_minutes, user):
+        if input_minutes < 0 or user not in self.users:
+            return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
+        
         dt = datetime.today().strftime('%Y-%m-%d')
         logline = f"{dt},{input_action},{input_minutes}"
 
@@ -248,6 +201,8 @@ class TimeKeeperDao:
             self.record_minutes_used(input_minutes, user)
 
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
+        return {"remaining_minutes":self.remaining_minutes[user]}, ""
+        
 
     def retrieve_admin_stat(self, user_name):
 
@@ -400,4 +355,53 @@ class TimeKeeperDao:
 
         return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count_vals
 
+    def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
+        if user in self.users:
+            return
+        self.users.add(user)
+        self.topup_minutes[user] = 0
+        self.used_minutes[user] = 0
+
+        if topup_minutes > 0:
+            self.record_minutes_added(topup_minutes,user)
+        if used_minutes > 0:
+            self.record_minutes_used(used_minutes,user)
+
+    
+    # imports time added and used to databases. 
+    # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
+    # this is because kids often save up a bunch of topup and used records, and when we upload time, we want to see them on the 
+    # graphs right away, so we record the time towards today
+    # TODO: obviously this method needs to be tested a lot more
+    def update_db_by_import(self, time_keeper_file, user):
+        if user not in self.users:
+            self.init_time_vals_for_user(user, 0, 35)
+
+        # The file format is 
+        # date time,action,minute
+        # 2022-01-17,topup,999
+        with open(time_keeper_file, "r") as in_file:
+            # first line is to remove the header
+            line = in_file.readline()
+            if line.strip() != self.TIME_FILE_HEADER:
+                return False
+            line = in_file.readline()
+            while line != None and line != '' and line != '\n':
+
+                log = line.strip().replace(' ','').split(',')
+                if len(log) != 3:
+                    return False
+                log_line = ",".join(log)
+                # if the logline already exists in db, ignore it. 
+                if self.time_db_tracker_imports.find_one({'user':user, 'logline': log_line}) == None:
+                    self.time_db_tracker_imports.insert_one({'user':user,'logline': log_line})
+                    v = int(log[2])
+                    if log[1] == TimeAction.topup.name:
+                        self.record_minutes_added(v, user)
+                    elif log[1] == TimeAction.used.name:
+                        self.record_minutes_used(v, user)
+
+                line = in_file.readline()
+        
+        return True
 

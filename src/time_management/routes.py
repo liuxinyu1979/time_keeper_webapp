@@ -173,10 +173,9 @@ def specify_time():
         user_name = current_user.get_id()
         input_minutes = time_upload_form.minutes_field.data
         input_action = time_upload_form.action_field.data
-        time_keeper_dao.record_time_and_logline(input_action, input_minutes, user_name)
-        remaining_time = time_keeper_dao.minutes_left(user_name)
+        remaining_time, err = time_keeper_dao.record_time_and_logline(input_action, input_minutes, user_name)
 
-        return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time)
+        return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time["remaining_minutes"])
 
     if time_upload_form.validate_on_submit():
         time_upload_form.minutes_field.data= 1
