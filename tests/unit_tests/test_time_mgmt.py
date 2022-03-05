@@ -1,7 +1,7 @@
 from flask_pymongo import PyMongo
 from time_management.timekeeperdao import TimeKeeperDao, AdminAction, TimeAction
 import mongomock
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 import pytest
@@ -314,5 +314,51 @@ def test_fail_record_time_and_logline(app_db):
     ret, err = tkd.record_time_and_logline("invalid_action", 5, "test")
     assert ret == {} and len(err) > 0
 
+def test_success_retrieve_admin_stat_all_14_days(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
 
+    # fake 14 days of admin actions
+    current_date = datetime.today() 
+    dr_gt = [(current_date+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
+    is_success_hit_count_gt = [[0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))]]
+    actions_hit_count_gt = [[0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))]]
+    for i in range(13, -1, -1):
+        datetime_tmp =current_date+timedelta(-i)
+        admin_collection.insert_one({"datetime":datetime_tmp, "user":"test", "action":"Unpause", "is_success":True})
+        actions_hit_count_gt[1][i] += 1 
+        is_success_hit_count_gt[0][i] += 1 
 
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    is_success, dr, is_success_hit_count, actions, actions_hit_count = tkd.retrieve_admin_stat("test")
+    assert is_success == ['Success', 'Fail']
+    assert actions == [AdminAction.Pause.name, AdminAction.Unpause.name, AdminAction.wifion.name]
+    assert dr_gt == dr
+    # Due to the timing issue, retrieve_admin_stat's 'datetime': {'$gt': date_range[0], '$lt': date_range[1]} filter
+    # may filter out the first and/or last
+    assert actions_hit_count_gt[0] == actions_hit_count[0]
+    assert actions_hit_count_gt[1][1:-1] == actions_hit_count[1][1:-1]
+    assert actions_hit_count_gt[2] == actions_hit_count[2]
+
+    assert is_success_hit_count_gt[0][1:-1] == is_success_hit_count[0][1:-1]
+    assert is_success_hit_count_gt[1] == is_success_hit_count[1]
+
+def test_success_retrieve_admin_stat_14_days_no_data(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
+
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    is_success, dr, is_success_hit_count, actions, actions_hit_count = tkd.retrieve_admin_stat("test")
+    current_date = datetime.today() 
+    dr_gt = [(current_date+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
+    is_success_hit_count_gt = [[0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))]]
+    actions_hit_count_gt = [[0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))], [0 for i in range(len(dr_gt))]]
+
+    assert is_success == ['Success', 'Fail']
+    assert actions == [AdminAction.Pause.name, AdminAction.Unpause.name, AdminAction.wifion.name]
+    assert dr_gt == dr
+    assert is_success_hit_count_gt == is_success_hit_count
+    assert actions_hit_count_gt == actions_hit_count
+ 

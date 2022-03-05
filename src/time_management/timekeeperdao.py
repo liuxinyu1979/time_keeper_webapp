@@ -249,6 +249,7 @@ class TimeKeeperDao:
                 }
             }
         ]
+
         for doc in self.time_db_tracker_admin.aggregate(pipeline=pl):
             if doc['_id']['date'] not in lookup:
                 continue
