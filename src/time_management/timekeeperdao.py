@@ -184,10 +184,7 @@ class TimeKeeperDao:
             return {}, "user {user} is not valid"
         rec = self.time_db_tracker_records.find_one({'user':user, 'datetime':queried_date_time})
         return rec, ""
-    
-    '''
-    unit tested above
-    '''
+
     def record_time_and_logline(self, input_action, input_minutes, user):
         if input_minutes < 0 or user not in self.users or (input_action != TimeAction.topup.name and input_action != TimeAction.used.name):
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
@@ -202,10 +199,12 @@ class TimeKeeperDao:
 
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
-        
-
+    
+    '''
+    unit tested above
+    '''
+    # retrieve admin stats for the last 14 days
     def retrieve_admin_stat(self, user_name):
-
         is_success = ['Success', 'Fail']
         actions = [AdminAction.Pause.name, AdminAction.Unpause.name, AdminAction.wifion.name]
         current_date = datetime.today() 
@@ -269,7 +268,7 @@ class TimeKeeperDao:
 
         return is_success, dr, is_success_hit_count, actions, actions_hit_count
 
-
+    # retrieve time stats for the last 14 days
     def retrieve_for_time_stat(self, start, end, user_name):
 
         # parallel array

@@ -15,6 +15,14 @@ def get_mocked_collections():
 
     return record_collection, admin_collection, import_collection
 
+def get_mocked_and_patched_collections(mocker):
+    record_collection, admin_collection, import_collection = get_mocked_collections()
+    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+    return record_collection, admin_collection, import_collection, mocker
+
 # @pytest.mark.skip
 def test_create_timekeeperdao_success_basic(app_db):
     _, mongo_client, mocker = app_db
@@ -28,15 +36,11 @@ def test_create_timekeeperdao_success_basic(app_db):
 
 def test_successful_create_timekeeperdao_with_all_collections(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
+
     record_collection.insert_one({"datetime":"2021-11-24T00:00:00.000+00:00", "user":"test", "minutesAdded":[35]})
     admin_collection.insert_one({"datetime":"2021-11-24T00:00:00.000+00:00", "user":"test", "action":"Unpause", "is_success":"true"})
     import_collection.insert_one({"user":"test", "logline":"2022-02-14,topup,1"})
-
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["admin", "records", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
 
     tkd = TimeKeeperDao(mongo_client=mongo_client)
 
@@ -91,7 +95,6 @@ def test_successful_create_timekeeperdao_when_missing_imports_collections(app_db
 def test_successful_create_timekeeperdao_only_records_coll_and_only_used_minutes(app_db):
     _, mongo_client, mocker = app_db
     record_collection, admin_collection, import_collection = get_mocked_collections()
-
     record_collection.insert_one({"datetime":"2021-11-24T00:00:00.000+00:00", "user":"test", "minutesUsed":[5]})
     imp_spy = mocker.spy(import_collection, "insert_one")
     admin_spy = mocker.spy(admin_collection, "insert_one")
@@ -113,17 +116,12 @@ def test_successful_create_timekeeperdao_only_records_coll_and_only_used_minutes
 
 def test_successful_export_user_time_to_csv(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
-
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
+    
     datetime_tmp = datetime.strptime("2021-11-24", '%Y-%m-%d')
     record_collection.insert_one({"datetime":datetime_tmp, "user":"test", "minutesAdded":[35], "minutesUsed":[30]})
     admin_collection.insert_one({"datetime":datetime_tmp, "user":"test", "action":"Unpause", "is_success":"true"})
     import_collection.insert_one({"user":"test", "logline":"2022-02-14,topup,1"})
-
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["admin", "records", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
 
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     assert tkd.db_exist == True
@@ -137,14 +135,8 @@ def test_successful_export_user_time_to_csv(app_db):
 
 def test_correct_records_coll_doc_count(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
-
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35], "minutesUsed":[30]})
-
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
 
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     assert 1 == tkd.document_count("test")
@@ -153,17 +145,12 @@ def test_correct_records_coll_doc_count(app_db):
 
 def test_correct_pagination_records_coll(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
 
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     # 6 documents
     for i in range(1, 7):
         date_str = str(i)
         record_collection.insert_one({"datetime":f"2021-11-{i}T00:00:00.000+00:0", "user":"test", "minutesAdded":[i]})
-
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
 
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     # above inserted 6 documents, enough for 3 pages
@@ -181,13 +168,8 @@ def test_correct_pagination_records_coll(app_db):
 
 def test_fail_due_to_pagination_input_records_coll(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
 
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     records = tkd.find_documents_by_page("test", page_num=0, per_page_limit=2)
@@ -202,12 +184,8 @@ def test_fail_due_to_pagination_input_records_coll(app_db):
 def test_success_get_user_time_info(app_db):
     user_name = "test"
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     remain_min, topup_min, used_min = tkd.get_user_time_info(user_name)
     assert remain_min == 35 and topup_min == 35 and used_min == 0
@@ -219,24 +197,16 @@ def test_success_get_user_time_info(app_db):
 
 def test_fail_get_user_time_info(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     remain_min, topup_min, used_min = tkd.get_user_time_info("test_acc_nonexist")
     assert remain_min == -1 and topup_min == -1 and used_min == -1
 
 def test_success_record_admin_action(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     for aa in AdminAction:
         ret, err = tkd.record_admin_action(aa.name, True, "test")
@@ -246,36 +216,24 @@ def test_success_record_admin_action(app_db):
 
 def test_fail_record_admin_action(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_admin_action("invalid_admin_action", True, "test")
     assert ret == False and err == "Unrecognized admin action"
 
 def test_success_record_minutes_added(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_minutes_added(5, "test")
     assert ret["remaining_minutes"] == 40 and err == ""
 
 def test_fail_record_minutes_added(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_minutes_added(-1, "test")
     assert ret == {} and len(err) > 0
@@ -285,24 +243,16 @@ def test_fail_record_minutes_added(app_db):
 
 def test_success_record_minutes_used(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_minutes_used(5, "test")
     assert ret["remaining_minutes"] == 30 and err == ""
 
 def test_fail_record_minutes_used(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_minutes_added(-1, "test")
     assert ret == {} and len(err) > 0
@@ -312,12 +262,8 @@ def test_fail_record_minutes_used(app_db):
 
 def test_success_get_minutes_in_db(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
 
     records, err = tkd.get_minutes_in_db("test", "1970-11-24T00:00:00.000+00:0")
@@ -328,24 +274,16 @@ def test_success_get_minutes_in_db(app_db):
 
 def test_fail_get_minutes_in_db(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     records, err = tkd.get_minutes_in_db("test_acc_nonexist", "1970-11-24T00:00:00.000+00:0")
     assert records == {} and len(err) > 0
 
 def test_success_record_time_and_logline(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     time_in_minute = 10
     record, err = tkd.record_time_and_logline(TimeAction.topup.name, time_in_minute, "test")
@@ -365,12 +303,9 @@ def test_success_record_time_and_logline(app_db):
 
 def test_fail_record_time_and_logline(app_db):
     _, mongo_client, mocker = app_db
-    record_collection, admin_collection, import_collection = get_mocked_collections()
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
     record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"test", "minutesAdded":[35]})
-    mocker.patch('flask_pymongo.wrappers.Database.list_collection_names', return_value=["records", "admin", "imports"])
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_records_collection', return_value=record_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_imports_collection', return_value=import_collection)
-    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_admin_collection', return_value=admin_collection)
+
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     ret, err = tkd.record_time_and_logline(TimeAction.topup.name, -1, "test")
     assert ret == {} and len(err) > 0
@@ -378,4 +313,6 @@ def test_fail_record_time_and_logline(app_db):
     assert ret == {} and len(err) > 0
     ret, err = tkd.record_time_and_logline("invalid_action", 5, "test")
     assert ret == {} and len(err) > 0
+
+
 
