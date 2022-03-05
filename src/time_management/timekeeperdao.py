@@ -184,30 +184,10 @@ class TimeKeeperDao:
             return {}, "user {user} is not valid"
         rec = self.time_db_tracker_records.find_one({'user':user, 'datetime':queried_date_time})
         return rec, ""
-
+    
     '''
     unit tested above
     '''
-    # Adds minutes to current calendar day
-    def topup_minutes_in_db(self, number_of_minutes, user):
-        if number_of_minutes < 0 or user not in self.users:
-            return
-        self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
-        self.topup_minutes[user] += number_of_minutes
-        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
-
-    def update_minutes_used_in_db(self, number_of_minutes, user):
-        if number_of_minutes <= 0 or user not in self.users:
-            return
-        today_time = datetime.today()
-        tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
-        timestamp_part = {"hr":today_time.hour, "minute": today_time.minute, "second": today_time.second}
-        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsed':number_of_minutes}}, upsert=True)
-        self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsedTimeStamp':timestamp_part}}, upsert=True)
-
-        self.used_minutes[user] += number_of_minutes
-        self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
-
     def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
         if user in self.users:
             return
@@ -216,9 +196,9 @@ class TimeKeeperDao:
         self.used_minutes[user] = 0
 
         if topup_minutes > 0:
-            self.topup_minutes_in_db(topup_minutes,user)
+            self.record_minutes_added(topup_minutes,user)
         if used_minutes > 0:
-            self.update_minutes_used_in_db(used_minutes,user)
+            self.record_minutes_used(used_minutes,user)
 
     
     # imports time added and used to databases. 
@@ -250,9 +230,9 @@ class TimeKeeperDao:
                     self.time_db_tracker_imports.insert_one({'user':user,'logline': log_line})
                     v = int(log[2])
                     if log[1] == TimeAction.topup.name:
-                        self.topup_minutes_in_db(v, user)
+                        self.record_minutes_added(v, user)
                     elif log[1] == TimeAction.used.name:
-                        self.update_minutes_used_in_db(v, user)
+                        self.record_minutes_used(v, user)
 
                 line = in_file.readline()
         
@@ -261,14 +241,12 @@ class TimeKeeperDao:
     def record_time_and_logline(self, input_action, input_minutes, user):
         dt = datetime.today().strftime('%Y-%m-%d')
         logline = f"{dt},{input_action},{input_minutes}"
-        
-        # print(user, input_minutes)
 
         if input_action == TimeAction.topup.name:
-            self.topup_minutes_in_db(input_minutes, user)
+            self.record_minutes_added(input_minutes, user)
         elif input_action == TimeAction.used.name:
-            self.update_minutes_used_in_db(input_minutes, user)
-        # print(user, logline)
+            self.record_minutes_used(input_minutes, user)
+
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
 
     def retrieve_admin_stat(self, user_name):

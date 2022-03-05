@@ -337,3 +337,4 @@ def test_fail_get_minutes_in_db(app_db):
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     records, err = tkd.get_minutes_in_db("test_acc_nonexist", "1970-11-24T00:00:00.000+00:0")
     assert records == {} and len(err) > 0
+
