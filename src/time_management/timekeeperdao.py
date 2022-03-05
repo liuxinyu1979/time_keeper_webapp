@@ -189,7 +189,7 @@ class TimeKeeperDao:
     unit tested above
     '''
     def record_time_and_logline(self, input_action, input_minutes, user):
-        if input_minutes < 0 or user not in self.users:
+        if input_minutes < 0 or user not in self.users or (input_action != TimeAction.topup.name and input_action != TimeAction.used.name):
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
         
         dt = datetime.today().strftime('%Y-%m-%d')
