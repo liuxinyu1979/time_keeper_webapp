@@ -365,12 +365,24 @@ def test_success_retrieve_admin_stat_14_days_no_data(app_db):
 def test_success_retrieve_time_stat_all_14_days(app_db):
     _, mongo_client, mocker = app_db
     record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
-    current_date = datetime.today() 
+    current_date = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)
     dr_gt = [(current_date+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
 
-    for i in range(13, -1, -1):
-        datetime_tmp =current_date+timedelta(-i)
-        record_collection.insert_one({"datetime":datetime_tmp, "user":"test", "minutesAdded":[35]})
+    day_count = 14
+    min_added = 5
+    min_used = 1
+    # fake minutesUsedTimeStamp for hr 1 to hr 13
+    for i in range(day_count-1, -1, -1):
+        timestamp_part = {"hr":i, "minute": 0, "second": 0}
+        datetime_tmp =(current_date+timedelta(-i)).replace(hour=0,minute=0,second=0,microsecond=0)
+        record_collection.insert_one({"datetime":datetime_tmp, "user":"test", "minutesAdded":[min_added], "minutesUsed": [min_used], 'minutesUsedTimeStamp':timestamp_part})
     
     tkd = TimeKeeperDao(mongo_client=mongo_client)
     date_range, used, added, ampm, hrs, hit_count_vals = tkd.retrieve_for_time_stat(0, 1, "test")
+    assert ampm == ["am", "pm"]
+    assert hrs == ["1","2","3","4","5","6","7","8","9","10","11","12"]
+    assert date_range == dr_gt
+    assert added == [min_added]*day_count
+    assert used == [min_used]*day_count
+    assert hit_count_vals[0] == [1]*12
+    assert hit_count_vals[1] == [1]+[0]*11
