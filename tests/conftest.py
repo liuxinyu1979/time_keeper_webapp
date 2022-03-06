@@ -4,6 +4,7 @@ from src.config import TestingConfig
 
 # For test code coverage:
 # pytest --cov-report term --cov=src tests/
+# pytest --cov-report html --cov-report annotate --cov=src tests/
 # https://pytest-cov.readthedocs.io/en/latest/readme.html#installation
 
 

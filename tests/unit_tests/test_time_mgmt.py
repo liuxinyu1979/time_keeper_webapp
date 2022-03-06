@@ -362,3 +362,15 @@ def test_success_retrieve_admin_stat_14_days_no_data(app_db):
     assert is_success_hit_count_gt == is_success_hit_count
     assert actions_hit_count_gt == actions_hit_count
  
+def test_success_retrieve_time_stat_all_14_days(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, admin_collection, import_collection, mocker = get_mocked_and_patched_collections(mocker)
+    current_date = datetime.today() 
+    dr_gt = [(current_date+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
+
+    for i in range(13, -1, -1):
+        datetime_tmp =current_date+timedelta(-i)
+        record_collection.insert_one({"datetime":datetime_tmp, "user":"test", "minutesAdded":[35]})
+    
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    date_range, used, added, ampm, hrs, hit_count_vals = tkd.retrieve_for_time_stat(0, 1, "test")
