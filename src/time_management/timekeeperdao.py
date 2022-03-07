@@ -200,9 +200,6 @@ class TimeKeeperDao:
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
     
-    '''
-    unit tested above
-    '''
     # retrieve admin stats for the last 14 days
     def retrieve_admin_stat(self, user_name):
         is_success = ['Success', 'Fail']
@@ -354,7 +351,10 @@ class TimeKeeperDao:
             added[loc] = doc['minutesAddedSum']
 
         return date_range[::-1], used[::-1], added[::-1], ampm, hrs, hit_count_vals
-
+ 
+    '''
+    unit tested above
+    '''
     def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
         if user in self.users:
             return
