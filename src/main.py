@@ -100,61 +100,6 @@ def about_page():
     return render_template("about.html")
 
 
-'''
-Test functions start
-'''
-
-@app.route('/<string:user_name>')
-@login_required
-def greeting(user_name):
-    return f"<h1>Greeting: Hello {user_name}</h1>"
-
-@app.route('/test_admin_actions', methods=['GET'])
-@login_required
-def testadminactions():
-    admin_action = time_keeper_dao.admin_action_get_one()
-    if admin_action == None:
-        return f"<h1>admin page</h1>"
-
-    return f"<h1>{admin_action['action']}</h1> <h1>{admin_action['datetime']}</h1>"
-
-# For the two admin graphs
-@app.route('/retrieve_admin_stats', methods=['GET'])
-@login_required
-def retrieve_admin_stats():
-    success_flags, date_range, success_flags_hit_count, actions, actions_hit_count  = time_keeper_dao.retrieve_admin_stat(current_user.get_id())
-    resp = {
-        "date_range": date_range,
-        "attempt_flags": success_flags,
-        actions[0]:actions_hit_count[0],
-        actions[1]:actions_hit_count[1],
-        actions[2]:actions_hit_count[2]
-    }
-    ss = jsonify(resp)
-    return ss
-
-# retrieve all time graphs
-@app.route('/retrieve_time_stats', methods=['GET'])
-@login_required
-def retrieve_time_stats():
-    date_range, used, added, ampm, hrs, hit_count = time_keeper_dao.retrieve_for_time_stat(0,1, current_user.get_id())
-    resp = {
-        "date_range": date_range,
-        "used": used,
-        "added": added,
-        "hours":hrs,
-        "ampm": ampm,
-        "am_hit_count": hit_count[0],
-        "pm_hit_count": hit_count[1]
-    }
-    ss = jsonify(resp)
-    return ss    
-'''
-End of test endpoints
-'''
-###################################
-
-
 # to enable ssl_context for on-the-fly certificates, run flask run --cert=adhoc 
 if __name__ == '__main__':
     app.run(ssl_context='adhoc')

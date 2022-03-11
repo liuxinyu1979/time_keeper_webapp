@@ -71,7 +71,7 @@ class TimeKeeperDao:
             self.time_db_tracker_records.insert_one(self.INIT_RECORD_TABLE_PAYLOAD)
             self.time_db_tracker_admin.insert_one(self.INIT_ADMIN_TABLE_PAYLOAD)
             self.time_db_tracker_imports.insert_one(self.INIT_IMPORTS_TABLE_PAYLOAD)
-            self.topup_minutes  = self.WEEKEND_REWARD_CONS_MINUTES
+            self.topup_minutes[self.test_acc]  = self.WEEKEND_REWARD_CONS_MINUTES
 
             self.time_db_tracker_records.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
             self.time_db_tracker_admin.create_index([("datetime", flask_pymongo.DESCENDING)], unique=True, name="datetimeIdx")
@@ -156,11 +156,16 @@ class TimeKeeperDao:
         self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
         return True, ""
 
+    def get_today_daytime(self):
+        today_time = datetime.today()
+        today_time_zero_minute = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
+        return today_time, today_time_zero_minute
+
     def record_minutes_added(self, number_of_minutes, user):
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
-
-        self.time_db_tracker_records.update_one({'user':user,'datetime':datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
+        _, today_time_zero_time = self.get_today_daytime()
+        self.time_db_tracker_records.update_one({'user':user,'datetime':today_time_zero_time}, {'$push': {'minutesAdded':number_of_minutes}}, upsert=True)
         self.topup_minutes[user] += number_of_minutes
         self.remaining_minutes[user] = self.topup_minutes[user] - self.used_minutes[user]
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
@@ -169,8 +174,10 @@ class TimeKeeperDao:
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
         
-        today_time = datetime.today()
-        tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
+        today_time, tt = self.get_today_daytime()
+
+        # today_time = datetime.today()
+        # tt = today_time.replace(hour=0,minute=0,second=0,microsecond=0)
         timestamp_part = {"hr":today_time.hour, "minute": today_time.minute, "second": today_time.second}
         self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsed':number_of_minutes}}, upsert=True)
         self.time_db_tracker_records.update_one({'user':user,'datetime':tt}, {'$push': {'minutesUsedTimeStamp':timestamp_part}}, upsert=True)
@@ -185,6 +192,10 @@ class TimeKeeperDao:
         rec = self.time_db_tracker_records.find_one({'user':user, 'datetime':queried_date_time})
         return rec, ""
 
+    # this method is called from specify_time, meaning users enter add/used time instead of upload by file. 
+    # We must record these manual input as if they are loglines from file upload. If we don't, and a user 
+    # reupload a previously exported time file, we may double count some entries. Remeber, an exported time file
+    # exports all the entries from "records" collection, not the "imports" collection
     def record_time_and_logline(self, input_action, input_minutes, user):
         if input_minutes < 0 or user not in self.users or (input_action != TimeAction.topup.name and input_action != TimeAction.used.name):
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
@@ -355,7 +366,10 @@ class TimeKeeperDao:
     '''
     unit tested above
     '''
+    # This method is typically called during user signup, as a one-off bonus
+    # This method ignores negative inputs
     def init_time_vals_for_user(self, user, used_minutes, topup_minutes):
+        # since it's init, we allow minutes to be 0. 
         if user in self.users:
             return
         self.users.add(user)
@@ -371,10 +385,11 @@ class TimeKeeperDao:
     # imports time added and used to databases. 
     # The time added and used won't be recorded for the days did the topup. They will be recorded towards the day of import
     # this is because kids often save up a bunch of topup and used records, and when we upload time, we want to see them on the 
-    # graphs right away, so we record the time towards today
-    # TODO: obviously this method needs to be tested a lot more
+    # graphs right away, so we record the time towards date of upload, which is today
     def update_db_by_import(self, time_keeper_file, user):
         if user not in self.users:
+            # TODO: check when does this happen, doesn't seem to be possible because a person needs to sign in before upload 
+            # time records by file. 
             self.init_time_vals_for_user(user, 0, 35)
 
         # The file format is 

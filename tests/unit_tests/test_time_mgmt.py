@@ -386,3 +386,62 @@ def test_success_retrieve_time_stat_all_14_days(app_db):
     assert used == [min_used]*day_count
     assert hit_count_vals[0] == [1]*12
     assert hit_count_vals[1] == [1]+[0]*11
+
+def test_success_init_time_vals_for_user(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, _, _, mocker = get_mocked_and_patched_collections(mocker)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    new_user_name = "new_test_user"
+    used_min = 1
+    add_min = 2
+    tkd.init_time_vals_for_user(new_user_name, used_min, add_min)
+    assert tkd.topup_minutes[new_user_name] == add_min
+    assert tkd.used_minutes[new_user_name] == used_min
+    assert tkd.remaining_minutes[new_user_name] == add_min - used_min
+    assert tkd.users == {tkd.test_acc, new_user_name}
+
+def test_success_init_time_vals_for_user_ignore_invalid_input(app_db):
+    _, mongo_client, mocker = app_db
+    record_collection, _, _, mocker = get_mocked_and_patched_collections(mocker)
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    tmp_day = datetime.today()+timedelta(+1)
+    tmp_day_zero_min = tmp_day.replace(hour=0,minute=0,second=0,microsecond=0)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today_daytime', return_value=[tmp_day,tmp_day_zero_min])
+
+    new_user_name1 = "new_test_user"
+    used_min = -1
+    add_min = 2
+    tkd.init_time_vals_for_user(new_user_name1, used_min, add_min)
+    assert tkd.topup_minutes[new_user_name1] == add_min
+    assert tkd.used_minutes[new_user_name1] == 0
+    assert tkd.remaining_minutes[new_user_name1] == 2
+    assert tkd.users == {tkd.test_acc, new_user_name1}
+
+    tmp_day = datetime.today()+timedelta(+2)
+    tmp_day_zero_min = tmp_day.replace(hour=0,minute=0,second=0,microsecond=0)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today_daytime', return_value=[tmp_day,tmp_day_zero_min])
+    new_user_name2 = "new_test_user2"
+    used_min = 2
+    add_min = -1
+    tkd.init_time_vals_for_user(new_user_name2, used_min, add_min)
+    assert tkd.topup_minutes[new_user_name2] == 0
+    assert tkd.used_minutes[new_user_name2] == used_min
+    assert tkd.remaining_minutes[new_user_name2] == -2 # this doesn't usually happen, the test here is just to make a point
+    assert tkd.users == {tkd.test_acc, new_user_name1, new_user_name2}
+
+def test_success_update_db_by_import(app_db):
+    _, mongo_client, mocker = app_db
+    user_name = "test"
+    record_collection, _, _, mocker = get_mocked_and_patched_collections(mocker)
+    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":user_name, "minutesAdded":[35]})
+
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    open_mock = mocker.mock_open(read_data="date time,action,minute\n2022-01-17,topup,5")
+    mocker.patch('builtins.open', open_mock)
+
+    tkd = TimeKeeperDao(mongo_client=mongo_client)
+    tkd.update_db_by_import("abc.csv", user_name)
+    tkd.topup_minutes[user_name] == 40
+    tkd.used_minutes[user_name] == 0
+    tkd.remaining_minutes[user_name] == 40
+

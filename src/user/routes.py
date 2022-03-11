@@ -150,19 +150,3 @@ def get_user_api():
             "remaining_minutes": time_keeper_dao.minutes_left(user_name)
         }), 200
 
-
-'''
-Test endpoints
-'''
-# login auth via api
-@app.route("/api/v1.0/testuser", methods=['GET'])
-@auth.login_required
-def get_test_user_api():
-
-    return "testuser", 200
-
-
-
-'''
-End of test endpoints
-'''
