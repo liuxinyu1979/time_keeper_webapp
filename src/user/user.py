@@ -9,15 +9,17 @@ class User():
 
     def __init__(self, mongo_client, time_keeper_dao):
         self.mongo = mongo_client
-        self.time_db_tracker_accounts = self.mongo.db.accounts
+        self.time_db_tracker_accounts = self.get_accounts_collection()
         self.time_keeper_dao = time_keeper_dao
 
-        self.INIT_ACCOUNTS_TABLE_PAYLOAD = {"name": "test","email": "test@au4tech.com","password": "", "created_on":datetime.fromtimestamp(0), "updated_on":datetime.fromtimestamp(0)}
+        self.INIT_ACCOUNTS_TABLE_PAYLOAD = {"name": "test_no_name","email": "test@au4tech.com","password": "", "created_on":datetime.fromtimestamp(0), "updated_on":datetime.fromtimestamp(0)}
         collection_names= set(self.mongo.db.list_collection_names())
         if "accounts" not in collection_names:
             self.time_db_tracker_accounts.insert_one(self.INIT_ACCOUNTS_TABLE_PAYLOAD)
             self.time_db_tracker_accounts.create_index([("name", flask_pymongo.DESCENDING)], unique=True, name="loginNameIdx")
 
+    def get_accounts_collection(self):
+        return self.mongo.db.accounts
 
     def acc_name_exist(self, acc_name):
         if self.time_db_tracker_accounts.find_one({'name':acc_name}):
