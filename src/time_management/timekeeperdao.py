@@ -31,6 +31,11 @@ class TimeKeeperDao:
         self.INIT_IMPORTS_TABLE_PAYLOAD = {"user":self.test_acc, "logline":f"1970-01-01,topup,{self.WEEKEND_REWARD_CONS_MINUTES}"}
 
         self.db_exist = self.init_with_db()
+    
+    def get_action_label(self, input_action):
+        if input_action == TimeAction.used.name:
+            return "Drawdown"
+        return "Topup"
 
     def init_with_db(self):
         self.time_db_tracker_records = self.get_records_collection()

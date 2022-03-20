@@ -1,13 +1,8 @@
-
-from time import time
-from flask import Flask, current_app, render_template,jsonify, request
-from src import create_app
-
+from flask import Flask, current_app, render_template, request
+from src import create_app 
 from time_management.timekeeperdao import TimeKeeperDao
 from user.user import User
 
-from config import DevConfig
-from flask_pymongo import PyMongo
 import plotgraphs
 from werkzeug.utils import secure_filename
 
@@ -20,14 +15,18 @@ if app == None:
 time_keeper_dao = TimeKeeperDao(mongo_client)
 account_mgmt = User(mongo_client=mongo_client, time_keeper_dao=time_keeper_dao)
 
+if time_keeper_dao.db_exist == False:
+    print("Log: db not exist")
+    exit()
+
+def get_app_and_objects():
+    return app, time_keeper_dao, account_mgmt
+
 # the routes module is going to import the flask app object, so keep the import below app = Flask...
 from user import routes
 from time_management import routes
 from flask_login import current_user, login_required
 
-if time_keeper_dao.db_exist == False:
-    print("Log: db not exist")
-    exit()
 
 @app.route('/home')
 @app.route('/home/<user_name>')
@@ -103,5 +102,5 @@ def about_page():
 # to enable ssl_context for on-the-fly certificates, run flask run --cert=adhoc 
 if __name__ == '__main__':
     app.run(ssl_context='adhoc')
-    
+
     

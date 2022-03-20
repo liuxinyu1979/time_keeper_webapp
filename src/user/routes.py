@@ -1,15 +1,19 @@
+from crypt import methods
 from flask import Flask, render_template, request,jsonify
-from user.user import User
+
 from user.userregform import UserRegistrationForm, UserLoginForm, AccountInfoForm, AccountSecretForm
 from werkzeug.security import generate_password_hash, check_password_hash
-from main import app, account_mgmt, time_keeper_dao
+from main import get_app_and_objects
 
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from user.useraccount import UserAccount
 
+app, time_keeper_dao, account_mgmt = get_app_and_objects()
+
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -119,10 +123,6 @@ def account_secret():
     return render_template("updatesecret.html", account_secret_form=account_sec_form)
 
 
-
-
-
-
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
@@ -142,11 +142,12 @@ def verify_password(username, password):
 @auth.login_required
 def get_user_api():
     user_name = auth.current_user()
-    return jsonify(
+    resp_body = jsonify(
         {
             "user_name":user_name, 
             "topup_minutes":time_keeper_dao.minutes_toppedup(user_name), 
             "used_minutes": time_keeper_dao.minutes_used(user_name), 
             "remaining_minutes": time_keeper_dao.minutes_left(user_name)
         }), 200
+    return resp_body
 

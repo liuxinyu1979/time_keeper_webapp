@@ -2,8 +2,6 @@ from flask import Flask
 from config import DevConfig
 from flask_pymongo import PyMongo
 
-
-
 def create_app(test_config=None):
     # create and configure the app
     qooqoo_app = Flask(__name__)

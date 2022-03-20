@@ -175,7 +175,7 @@ def specify_time():
         input_action = time_upload_form.action_field.data
         remaining_time, err = time_keeper_dao.record_time_and_logline(input_action, input_minutes, user_name)
 
-        return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time["remaining_minutes"])
+        return render_template("timeManagementResult.html",graph_url_name="Input time info result", file_name=None, time_file_upload_success=True, remaining_time=remaining_time["remaining_minutes"], input_action=time_keeper_dao.get_action_label(input_action))
 
     if time_upload_form.validate_on_submit():
         time_upload_form.minutes_field.data= 1
