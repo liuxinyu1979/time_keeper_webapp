@@ -1,14 +1,14 @@
 from pytest_mock import mocker
 from time_management.timekeeperdao import TimeKeeperDao
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 from user.user import User
 import mongomock
 
-mock_app = None
-mock_mongo_client = None
-mocker = None
+# mock_app = None
+# mock_mongo_client = None
+# mocker = None
 def get_mocked_collections():
     record_collection = mongomock.MongoClient().db.records
     admin_collection = mongomock.MongoClient().db.admin
@@ -27,7 +27,8 @@ def get_mocked_and_patched_collections(mocker):
     mocker.patch('user.user.User.get_accounts_collection', return_value=accounts_collection)
     
     datetime_tmp = datetime.strptime("2021-11-24", '%Y-%m-%d')
-    record_collection.insert_one({"datetime":f"2021-11-24T00:00:00.000+00:0", "user":"unittest", "minutesAdded":[35]})
+    timestamp_part = {"hr":0, "minute": 0, "second": 0}
+    record_collection.insert_one({"datetime":datetime_tmp, "user":"unittest", "minutesAdded":[35], "minutesUsed":[0],'minutesUsedTimeStamp':timestamp_part})
     admin_collection.insert_one({"datetime":datetime_tmp, "user":"unittest", "action":"Unpause", "is_success":True})
     import_collection.insert_one({"user":"unittest", "logline":"2022-02-14,topup,1"})
     dt = datetime.fromtimestamp(0)
@@ -38,7 +39,7 @@ def test_login_endpoint_without_session(app_db):
     # For now, setting mock_app to be global so that all the endpoints are already registered for subsequent tests
     # this is not reliable. The biggest issue is subsequent tests' 'user.routes.get_app_and_objects' doesn't get reloaded
     # and mock_app doesn't get registered with endpoints in their tests. 
-    global mock_app, mock_mongo_client, mocker
+    # global mock_app, mock_mongo_client, mocker
     mock_app, mock_mongo_client, mocker = app_db
     _, _, _, _, mocker = get_mocked_and_patched_collections(mocker)
     mock_time_keeper_dao = TimeKeeperDao(mock_mongo_client)
@@ -58,3 +59,26 @@ def test_login_endpoint_without_session(app_db):
     # login failure with error credential
     rep = mock_app.test_client().get('/api/v1.0/user', headers={"Authorization": "Basic test_not_exist:123"})
     assert '401 UNAUTHORIZED' == rep.status
+    
+    datetime_tmp = datetime.strptime("2021-11-25", '%Y-%m-%d')
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today', return_value=datetime_tmp)
+
+    datetime_tmp = datetime.strptime("2021-11-25", '%Y-%m-%d')
+    dr_gt = [(datetime_tmp+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
+    rep = mock_app.test_client().get('/api/v1.0/get_admin_stats', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert rep.json['Pause'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    assert rep.json['Success'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+    assert rep.json['date_range'] == dr_gt
+    assert rep.json['action_labels'] == ['Pause', 'Unpause', 'wifion']
+    assert rep.json['attempt_labels'] == ['Success', 'Fail']
+
+    rep = mock_app.test_client().get('/api/v1.0/get_time_stats', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert rep.json['date_range'] == dr_gt
+    assert rep.json['added'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 0]
+    assert rep.json['used'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    assert rep.json['hours'] == ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+    assert rep.json['ampm'] == ['am', 'pm']
+    assert rep.json['pm_hit_count'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    assert rep.json['am_hit_count'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]

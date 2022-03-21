@@ -216,11 +216,14 @@ class TimeKeeperDao:
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
     
+    def get_today(self):
+        return datetime.today() 
+
     # retrieve admin stats for the last 14 days
     def retrieve_admin_stat(self, user_name):
         is_success = ['Success', 'Fail']
         actions = [AdminAction.Pause.name, AdminAction.Unpause.name, AdminAction.wifion.name]
-        current_date = datetime.today() 
+        current_date = self.get_today()
         dr = [(current_date+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
         lookup = {}
         for i in range(len(dr)):
@@ -289,8 +292,9 @@ class TimeKeeperDao:
         # date_range->['2021-x-y', '2021-x-y', '2021-x-y']
         # used->[0, 0, 0]
         # added->[0,0,0]
+        current_date = self.get_today()
         num_of_days = 14
-        date_range = [(datetime.today()+timedelta(days=-i)).strftime('%Y-%m-%d') for i in range(0, num_of_days)]
+        date_range = [(current_date+timedelta(days=-i)).strftime('%Y-%m-%d') for i in range(0, num_of_days)]
         lookup = {}
         for i in range(len(date_range)):
             lookup[date_range[i]] = i

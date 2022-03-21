@@ -1,13 +1,16 @@
 import json
 from flask import Flask, render_template, request,jsonify, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
-from main import app, account_mgmt, time_keeper_dao
+from main import get_app_and_objects
+# from main import app, account_mgmt, time_keeper_dao
 from datetime import datetime
 from time_management.timeform import TimeForm
 from flask_httpauth import HTTPBasicAuth
 from flask_paginate import Pagination, get_page_parameter
 
 from user.user import User
+
+app, time_keeper_dao, account_mgmt = get_app_and_objects()
 
 
 auth = HTTPBasicAuth()
