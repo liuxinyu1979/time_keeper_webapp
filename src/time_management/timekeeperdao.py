@@ -149,7 +149,9 @@ class TimeKeeperDao:
     
     def get_admin_collection(self):
         return self.mongo.db.admin
-
+    
+    def get_today(self):
+        return datetime.today() 
     # this is for testing only
     def admin_action_get_one(self):
         v = self.time_db_tracker_admin.find_one()
@@ -158,7 +160,7 @@ class TimeKeeperDao:
     def record_admin_action(self, admin_action, is_successful, user):
         if admin_action not in set([v.name for v in AdminAction]):
             return False, "Unrecognized admin action"
-        self.time_db_tracker_admin.insert_one({'user':user, 'datetime':datetime.today(), 'action':admin_action, 'is_success':is_successful})
+        self.time_db_tracker_admin.insert_one({'user':user, 'datetime':self.get_today(), 'action':admin_action, 'is_success':is_successful})
         return True, ""
 
     def get_today_daytime(self):
@@ -215,9 +217,6 @@ class TimeKeeperDao:
 
         self.time_db_tracker_imports.insert_one({'user':user,'logline': logline})
         return {"remaining_minutes":self.remaining_minutes[user]}, ""
-    
-    def get_today(self):
-        return datetime.today() 
 
     # retrieve admin stats for the last 14 days
     def retrieve_admin_stat(self, user_name):

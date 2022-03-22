@@ -42,7 +42,7 @@ def test_login_endpoint_without_session(app_db):
     # and mock_app doesn't get registered with endpoints in their tests. 
     # global mock_app, mock_mongo_client, mocker
     mock_app, mock_mongo_client, mocker = app_db
-    _, _, _, _, mocker = get_mocked_and_patched_collections(mocker)
+    _, admin_collection, _, _, mocker = get_mocked_and_patched_collections(mocker)
     mock_time_keeper_dao = TimeKeeperDao(mock_mongo_client)
     fake_user = User(mongo_client=mock_mongo_client, time_keeper_dao=mock_time_keeper_dao)
 
@@ -127,3 +127,24 @@ def test_login_endpoint_without_session(app_db):
     )
     assert '200 OK' == rep.status
     assert 35 == rep.json['remaining_minutes']
+
+
+    # test POST /api/v1.0/admin_action endpoint
+    action = []
+    unittest_actions = admin_collection.find({"action":"Pause"})
+    for ua in unittest_actions:
+        action.append(ua)
+    assert len(action) == 0
+    rep = mock_app.test_client().post(
+        '/api/v1.0/admin_action', 
+        headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"}, 
+        data=json.dumps({"action": "Pause","is_successful": True})
+    ) 
+    
+    assert '200 OK' == rep.status
+    unittest_actions = admin_collection.find({"action":"Pause"})
+    for ua in unittest_actions:
+        action.append(ua)
+    assert 1 == len(action)
+    assert action[0]['action'] == 'Pause'
+
