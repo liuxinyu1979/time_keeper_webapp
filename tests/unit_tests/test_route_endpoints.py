@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 
 from user.user import User
 import mongomock
+import json
 
 # mock_app = None
 # mock_mongo_client = None
@@ -62,7 +63,9 @@ def test_login_endpoint_without_session(app_db):
     
     # test get_admin_stats get endpoint
     datetime_tmp = datetime.strptime("2021-11-25", '%Y-%m-%d')
+    datetime_tmp_zero_minute = datetime_tmp.replace(hour=0,minute=0,second=0,microsecond=0)
     mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today', return_value=datetime_tmp)
+    mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today_daytime', return_value=(datetime_tmp,datetime_tmp_zero_minute))
 
     datetime_tmp = datetime.strptime("2021-11-25", '%Y-%m-%d')
     dr_gt = [(datetime_tmp+timedelta(-i)).strftime('%Y-%m-%d') for i in range(13, -1, -1)]
@@ -108,3 +111,19 @@ def test_login_endpoint_without_session(app_db):
     rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=used&date=2021-11-25', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
     assert '200 OK' == rep.status
     assert [] == rep.json['used']
+
+    rep = mock_app.test_client().post(
+        '/api/v1.0/minutes', 
+        headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"}, 
+        data=json.dumps({"minutes": 1000,"type": "added"})
+    )
+    assert '200 OK' == rep.status
+    assert 1035 == rep.json['remaining_minutes']
+
+    rep = mock_app.test_client().post(
+        '/api/v1.0/minutes', 
+        headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"}, 
+        data=json.dumps({"minutes": 1000,"type": "used"})
+    )
+    assert '200 OK' == rep.status
+    assert 35 == rep.json['remaining_minutes']
