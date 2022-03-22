@@ -60,6 +60,7 @@ def test_login_endpoint_without_session(app_db):
     rep = mock_app.test_client().get('/api/v1.0/user', headers={"Authorization": "Basic test_not_exist:123"})
     assert '401 UNAUTHORIZED' == rep.status
     
+    # test get_admin_stats get endpoint
     datetime_tmp = datetime.strptime("2021-11-25", '%Y-%m-%d')
     mocker.patch('time_management.timekeeperdao.TimeKeeperDao.get_today', return_value=datetime_tmp)
 
@@ -73,6 +74,7 @@ def test_login_endpoint_without_session(app_db):
     assert rep.json['action_labels'] == ['Pause', 'Unpause', 'wifion']
     assert rep.json['attempt_labels'] == ['Success', 'Fail']
 
+    # test get_time_stats get endpoint
     rep = mock_app.test_client().get('/api/v1.0/get_time_stats', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
     assert '200 OK' == rep.status
     assert rep.json['date_range'] == dr_gt
@@ -82,3 +84,27 @@ def test_login_endpoint_without_session(app_db):
     assert rep.json['ampm'] == ['am', 'pm']
     assert rep.json['pm_hit_count'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     assert rep.json['am_hit_count'] == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+
+    # test /api/v1.0/minutes get endpoint with incorrect param
+    rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=added&date=abc', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '400 BAD REQUEST' == rep.status
+    assert 'invalid parameter, correct type is ?type=[added|used]&date=[YYYY-MM-DD]' == rep.json['error']
+
+
+    # test /api/v1.0/minutes get endpoint with incorrect param
+    # "2021-11-24" has added time, "2021-11-25" doesn't have added time
+    rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=added&date=2021-11-24', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert [35] == rep.json['added']
+    rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=added&date=2021-11-25', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert [] == rep.json['added']
+
+    # test /api/v1.0/minutes get endpoint with incorrect param
+    # "2021-11-24" has used time, "2021-11-25" doesn't have used time
+    rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=used&date=2021-11-24', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert [0] == rep.json['used']
+    rep = mock_app.test_client().get(f'/api/v1.0/minutes?type=used&date=2021-11-25', headers={"Authorization": "Basic dW5pdHRlc3Q6MTIz"})
+    assert '200 OK' == rep.status
+    assert [] == rep.json['used']
