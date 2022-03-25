@@ -181,6 +181,9 @@ class TimeKeeperDao:
         if number_of_minutes < 0 or user not in self.users:
             return {}, "Please check number of minutes {number_of_minutes} and user {user} are valid"
         
+        if self.remaining_minutes[user] <= 0:
+            return {"remaining_minutes":self.remaining_minutes[user]}, ""
+
         today_time, tt = self.get_today_daytime()
 
         # today_time = datetime.today()
